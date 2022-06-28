@@ -142,32 +142,7 @@ CInteractiveDoc* CInteractiveView::GetDocument() const // non-debug version is i
 #endif //_DEBUG
 
 LPTSTR UTF8ToUnicode(LPCSTR t);
-LPSTR UnicodeToUTF8(LPCTSTR s)
-{
-	int bsize = WideCharToMultiByte(
-		CP_UTF8,
-		0,
-		s,
-		-1,
-		NULL,
-		0,
-		NULL,
-		NULL
-	);
-	LPSTR mbuffer = new CHAR[bsize + 1];
-
-	WideCharToMultiByte(
-		CP_UTF8,
-		0,
-		s,
-		-1,
-		mbuffer,
-		bsize + 1,
-		NULL,
-		NULL
-	);
-	return mbuffer;
-}
+LPSTR UnicodeToUTF8(LPCTSTR s);
 
 // CInteractiveView message handlers
 #include "OutputWnd.h"

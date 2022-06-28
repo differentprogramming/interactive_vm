@@ -95,9 +95,13 @@
 #include <iomanip>
 #include "tinyutf8.h"
 #include <propkey.h>
+#include "oniguruma/oniguruma.h"
 
-#include "..\Solid Ch3\dirent_for_windows.h"
-#include "..\Solid Ch3\spooky.h"
+
+#define UTF8PROC_STATIC
+#include "utf8proc/utf8proc.h"
+#include "dirent_for_windows.h"
+#include "spooky.h"
 #include "InputDialog.h"
 #include "ChildFrm.h"
 #include "Resource.h"
@@ -109,7 +113,7 @@
 #include "MainFrm.h"
 
 #include "InteractiveView.h"
-#include "..\Solid Ch3\hashtable.h"
+#include "hashtable.h"
 
 #undef ERROR
 #undef IN

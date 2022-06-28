@@ -1,4 +1,4 @@
-#include "..\interactive\stdafx.h"
+#include "stdafx.h"
 
 /*
  * Open directory stream DIRNAME for read and return a pointer to the

@@ -433,7 +433,7 @@ void COutputWnd::AddLineWindow(wchar_t * path, LPSTR filename, LPSTR t, int wind
 		}
 	}
 
-	if (is_c) {
+	if (false && is_c) {
 		fname[r.get_index()]=0;
 		
 

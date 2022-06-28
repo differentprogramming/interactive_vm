@@ -1,4 +1,4 @@
-//===- KaleidoscopeJIT.h - A simple JIT for Kaleidoscope --------*- C++ -*-===//
+﻿//===- KaleidoscopeJIT.h - A simple JIT for Kaleidoscope --------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -26,6 +26,14 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
 #include <memory>
+
+#define report(f) _RPTF0(_CRT_WARN, f)
+#define report1(f,a) _RPTF1(_CRT_WARN, f,a)
+#define report2(f,a,b) _RPTF2(_CRT_WARN, f,a,b)
+#define report3(f,a,b,c) _RPTF3(_CRT_WARN, f,a,b,c)
+#define report4(f,a,b,c,d) _RPTF4(_CRT_WARN, f,a,b,c,d)
+#define report5(f,a,b,c,d,e) _RPTF5(_CRT_WARN, f,a,b,c,d,e)
+#define report6(f,a,b,c,d,e,g) _RPTF6(_CRT_WARN, f,a,b,c,d,e,g)
 
 namespace llvm {
     namespace orc {
@@ -132,9 +140,8 @@ namespace llvm {
 #include <cstdlib>
 #include <map>
 
-
-#include "stdafx.h"
-
+#include "grapheme.h"
+#ifdef NOOOOO
 extern COutputWnd* output_window;
 extern CMFCStatusBar* status_bar;
 
@@ -1494,3 +1501,1137 @@ static enum class Associativity OpAssoc[TK_NUM_TOKENS];
     InitializeModuleAndPassManager();
 
 }
+#else
+class lexer_generator
+{
+    void make_nfa(GraphemeString name, GraphemeString expression);
+    void make_skip_nfa(GraphemeString expression);
+public:
+    lexer_generator& prod(const char* _name, const wchar_t* _expression)
+    {
+        GraphemeString name(_name);
+        GraphemeString expression(_expression);
+        make_nfa(name, expression);
+        return *this;
+    }
+    lexer_generator&  prod(const char* _name,const char* _expression)
+    {
+        
+        GraphemeString name(_name);
+        
+        GraphemeString expression(_expression);
+        
+        make_nfa(name, expression);
+        
+        return *this;
+    }
+
+    lexer_generator& prod(const wchar_t* _name, const wchar_t* _expression)
+    {
+        GraphemeString name(_name);
+        GraphemeString expression(_expression);
+        make_nfa(name, expression);
+        return *this;
+    }
+
+    lexer_generator& prod(const wchar_t* _name, const char* _expression)
+    {
+        GraphemeString name(_name);
+        GraphemeString expression(_expression);
+        make_nfa(name, expression);
+        return *this;
+    }
+
+    lexer_generator& skip(const wchar_t* _expression)
+    {
+        GraphemeString expression(_expression);
+        make_skip_nfa(expression);
+        return *this;
+    }
+
+    lexer_generator& skip(const char* _expression) {
+        GraphemeString expression(_expression);
+        make_skip_nfa(expression);
+        return *this;
+    }
+
+};
+lexer_generator LexerGen;
+/*
+int main()
+{
+    std::ifstream t("C:\\local\\tinycc\\pre.c");
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    std::string b = buffer.str();
+    lexer_iterator<std::string::iterator> lexer(b.begin(), b.end());
+
+    do
+    {
+        std::cout << lexer->value << token_names[(int)lexer->type + 1] << '\n';
+        lexer.next();
+    } while (lexer->type != token_type::ENDOFFILE);
+    return 0;
+}*/
+LPSTR UnicodeToUTF8(LPCTSTR s);
+/*
+GraphemeString nye(L"ñññññññ"),
+ hindi(L"अनुच्छेद"),
+ emojis(L"🌷🎁💩😜👍🏳️‍🌈"),
+ diacritics(L"Ĺo͂řȩm̅"),
+ korean(L"뎌쉐"),
+ zalgo(L"Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞");
+ */
+GraphemeString source1(L"ñññññññअनुच्छेद🌷🎁💩😜👍🏳️‍🌈Ĺo͂řȩm̅뎌쉐Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞");
+GraphemeString source2 = source1.slice(7, -1);
+
+GraphemeString nye = source1.slice(0, 6).deep_copy(),
+hindi = source2.slice(0, 4).deep_copy(),
+emojis = source2.slice(5, 10).deep_copy(),
+diacritics = source2.slice(11, 15).deep_copy(),
+korean = source2.slice(16, 17).deep_copy(),
+zalgo = source2.slice(18,-1).deep_copy();
+
+struct unicode_property {
+    utf8proc_category_t value;
+    const char* name;
+    const char* description;
+};
+
+unicode_property unicode_properties[] =
+{
+    {UTF8PROC_CATEGORY_CN ,"","Other, not assigned"},
+    {UTF8PROC_CATEGORY_LU ,"","Letter, uppercase"},
+    {UTF8PROC_CATEGORY_LL ,"","Letter, lowercase"},
+    {UTF8PROC_CATEGORY_LT ,"","Letter, titlecase"},
+    {UTF8PROC_CATEGORY_LM ,"","Letter, modifier"},
+    {UTF8PROC_CATEGORY_LO ,"","Letter, other"},
+    {UTF8PROC_CATEGORY_MN ,"","Mark, nonspacing"},
+    {UTF8PROC_CATEGORY_MC ,"","Mark, spacing combining"},
+    {UTF8PROC_CATEGORY_ME ,"","Mark, enclosing"},
+    {UTF8PROC_CATEGORY_ND ,"","Number, decimal digit"},
+    {UTF8PROC_CATEGORY_NL ,"","Number, letter"},
+    {UTF8PROC_CATEGORY_NO ,"","Number, other"},
+    {UTF8PROC_CATEGORY_PC ,"","Punctuation, connector"},
+    {UTF8PROC_CATEGORY_PD ,"","Punctuation, dash"},
+    {UTF8PROC_CATEGORY_PS ,"","Punctuation, open"},
+    {UTF8PROC_CATEGORY_PE ,"","Punctuation, close"},
+    {UTF8PROC_CATEGORY_PI ,"","Punctuation, initial quote"},
+    {UTF8PROC_CATEGORY_PF ,"","Punctuation, final quote"},
+    {UTF8PROC_CATEGORY_PO ,"","Punctuation, other"},
+    {UTF8PROC_CATEGORY_SM ,"","Symbol, math"},
+    {UTF8PROC_CATEGORY_SC ,"","Symbol, currency"},
+    {UTF8PROC_CATEGORY_SK ,"","Symbol, modifier"},
+    {UTF8PROC_CATEGORY_SO ,"","Symbol, other"},
+    {UTF8PROC_CATEGORY_ZS ,"","Separator, space"},
+    {UTF8PROC_CATEGORY_ZL ,"","Separator, line"},
+    {UTF8PROC_CATEGORY_ZP ,"","Separator, paragraph"},
+    {UTF8PROC_CATEGORY_CC ,"","Other, control"},
+    {UTF8PROC_CATEGORY_CF ,"","Other, format"},
+    {UTF8PROC_CATEGORY_CS ,"","Other, surrogate"},
+    {UTF8PROC_CATEGORY_CO ,"","Other, private use"},
+  
+};
+
+#include <unordered_map>
+#include <set>
+int lex_error_position;
+struct nfa
+{
+    bool can_end;
+    int end_priority;
+    std::vector<utf8proc_category_t> has_category;
+    std::vector<utf8proc_category_t> lacks_category;
+    std::set<GraphemeString> matches;
+    std::set<GraphemeString> lacks;
+    int match_nfa; 
+    int range_positive_count;
+    int range_negative_count;
+
+    int no_match_nfa;
+    int or_nfa;
+    bool epsilon;
+    GraphemeString name;
+
+    nfa(GraphemeString& n) :name(n),match_nfa(-1),no_match_nfa(-1),or_nfa(-1), epsilon(true), can_end(false),end_priority(0), range_positive_count(0),range_negative_count(0){}
+    void matches_ascii_range(char a, char b, bool negate = false) {
+        epsilon = false;
+        char buf[2];
+        buf[1] = 0;
+        for (char i = a; i <= b; ++i) {
+            buf[0] = i;
+            if (negate) {
+                lacks.insert(GraphemeString(buf));
+                ++range_negative_count;
+            }
+            else {
+                ++range_positive_count;
+                matches.insert(GraphemeString(buf));
+            }
+        }
+    }
+    void matches_char(char a, bool negate = false) {
+        epsilon = false;
+        char buf[2];
+        buf[0] = a;
+        buf[1] = 0;
+
+        if (negate) lacks.insert(GraphemeString(buf));
+        else matches.insert(GraphemeString(buf));
+    }
+    //assumes that any ^ or ] or \p{ or :xxxxx: has already been processed
+    //for use inside range, special characters aren't special
+    GraphemeString read_char(GraphemeString& s, int& pos, GraphemeString & production_name) {
+        while (s[pos] == " ")++pos;
+        auto w = s[pos];
+        if (w == "\\"){
+            uint8_t buf[2];
+            buf[1] = 0;
+            ++pos;
+            auto w2 = s[pos];
+            uint8_t special = 0;
+            if (w2 == "e") special = 0x1b;
+            else if (w2 == "t") special = 9;
+            else if (w2 == "v") special = 0xb;
+            else if (w2 == "n") special = 0xa;
+            else if (w2 == "r") special = 0xd;
+            else if (w2 == "b") special = 8;
+            else if (w2 == "f") special = 0xc;
+            else if (w2 == "a") special = 7;
+            else if (w2 == "e") special = 0x1b;
+            else if (w2 == "") {
+                uint8_t errorbuf[200];
+                (GraphemeString("in production ") + production_name + " character expected after backslash.").fill_utf8(errorbuf);
+                lex_error_position = pos;
+                throw std::runtime_error((char*)errorbuf);
+            }
+            buf[0] = special;
+            ++pos;
+            if (special != 0) return GraphemeString(buf);
+            return w2;
+        }
+        ++pos;
+        return w;
+    }
+    bool ProcessPossibleCharClass(GraphemeString& s, int& pos, bool negate, GraphemeString& production_name) 
+    {
+        uint8_t errorbuf[200];
+        while (s[pos] == " ")++pos;
+        auto w = s[pos];
+        if (w == ":") {
+            if (s[pos + 5] == ":") {
+                if (s.slice(pos + 1, pos + 4) == "word") {
+                    pos += 6;
+                    matches_ascii_range('a', 'z', negate);
+                    matches_ascii_range('A', 'Z', negate);
+                    epsilon = false;
+                    return true;
+                }
+            }
+            else if (s[pos + 6] == ":") {
+                auto w = s.slice(pos + 1, pos + 5);
+                if (w == "alnum") {
+                    pos += 7;
+                    matches_ascii_range('a', 'z', negate);
+                    matches_ascii_range('A', 'Z', negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "ascii") {
+                    pos += 7;
+                    matches_ascii_range(0, 127,negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "blank") {
+                    matches_char(9, negate);
+                    matches_char(0x20, negate);
+                    pos += 7;
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "cntrl") {
+                    pos += 7;
+                    matches_ascii_range(1, 10, negate);
+                    matches_ascii_range(0xe, 0x1f, negate);
+                    matches_char(0x7f, negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "digit") {
+                    pos += 7;
+                    matches_ascii_range('0', '9', negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "lower") {
+                    pos += 7;
+                    matches_ascii_range('a', 'z', negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "graph") {
+                    pos += 7;
+                    matches_ascii_range('!', '~', negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "print") {
+                    pos += 7;
+                    matches_ascii_range(' ', '~', negate);
+                    matches_char('\t', negate);
+                    matches_char('\n', negate);
+                    matches_char('\r', negate);
+                    matches_char(0x0b, negate);
+                    matches_char(0x20, negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "punct") {
+                    pos += 7;
+                    matches_ascii_range('!', '\\', negate);
+                    matches_ascii_range(':', '@', negate);
+                    matches_ascii_range('[', '`', negate);
+                    matches_ascii_range('{', '~', negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "space") {
+                    pos += 7;
+                    matches_char(' ', negate);
+                    matches_char('\t', negate);
+                    matches_char('\n', negate);
+                    matches_char('\r', negate);
+                    matches_char(0x0b, negate);
+                    matches_char(0x20, negate);
+                    epsilon = false;
+                    return true;
+                }
+                else if (w == "upper") {
+                    pos += 7;
+                    matches_ascii_range('A', 'Z', negate);
+                    epsilon = false;
+                    return true;
+                }
+            }
+            else if (s[pos + 7] == ":") {
+                if (s.slice(pos + 1, pos + 6) == "xdigit") {
+                    pos += 8;
+                    matches_ascii_range('a', 'f', negate);
+                    matches_ascii_range('A', 'F', negate);
+                    matches_ascii_range('0', '9', negate);
+                    epsilon = false;
+                    return true;
+                }
+            }
+            (GraphemeString("in production ") + production_name + " char class expected after : or colon has to be escaped with at backslash.").fill_utf8(errorbuf);
+            lex_error_position = pos;
+            throw std::runtime_error((char*)errorbuf);
+
+        }
+        else {
+            if (w == "\\" && (s[pos + 1] == "p"|| s[pos + 1] == "P")) {
+                //for now {}{}{}
+                return false;
+            }
+            else {
+                auto first = read_char(s,pos, production_name);
+                int32_t first_codepoint;
+                first.fill_codepoints(&first_codepoint, false);
+                while (s[pos] == " ")++pos;
+                if (s[pos] == "-") {
+                    ++pos;
+                    if (first.codepoint_length() > 1) {
+                        (GraphemeString("in production ") + production_name + " multi-codepoint character "+first+" can't be used in a range.").fill_utf8(errorbuf);
+                        lex_error_position = pos;
+                        throw std::runtime_error((char*)errorbuf);
+                    }
+                    while (s[pos] == " ")++pos;
+                    if (s[pos] == "]" || s[pos] == "^" || s[pos]=="" || (s[pos] == "\\" && (s[pos+1] == "p"|| s[pos + 1] == "P"))) {
+                        (GraphemeString("in production ") + production_name + " end of range missing.").fill_utf8(errorbuf);
+                        lex_error_position = pos;
+                        throw std::runtime_error((char*)errorbuf);
+                    }
+                    auto second = read_char(s, pos, production_name);
+                    if (second.codepoint_length() > 1) {
+                        (GraphemeString("in production ") + production_name + " multi-codepoint character " + second + " can't be used in a range.").fill_utf8(errorbuf);
+                        lex_error_position = pos;
+                        throw std::runtime_error((char*)errorbuf);
+                    }
+                    epsilon = false;
+                    int32_t second_codepoint;
+                    
+                    second.fill_codepoints(&second_codepoint, false);
+                    if (first_codepoint > second_codepoint) {
+                        int32_t t = first_codepoint;
+                        first_codepoint = second_codepoint;
+                        second_codepoint = t;
+                    }
+                    for (int32_t i = first_codepoint; i <= second_codepoint; ++i) {
+                        int32_t b[2];
+                        b[0] = i;
+                        b[1] = 0;
+                        if (negate) {
+                            ++range_negative_count;
+                            lacks.insert(GraphemeString(b));
+                        }
+                        else {
+                            ++range_negative_count;
+                            matches.insert(GraphemeString(b));
+                        }
+                    }
+                    return true;
+                }
+                int32_t b[2];
+                b[0] = first_codepoint;
+                b[1] = 0;
+                epsilon = false;
+                if (negate) {
+                    ++range_negative_count;
+                    lacks.insert(GraphemeString(b));
+                }
+                else {
+                    ++range_negative_count;
+                    matches.insert(GraphemeString(b));
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+};
+std::vector<nfa> nfas;
+std::vector<int> nfa_start_states;
+std::unordered_map < GraphemeString, int> name_to_nfa;
+
+struct last_found_nfa
+{
+    int found;
+    int priority;
+
+    int pos;
+    last_found_nfa(int pos) :found(-1), priority(-3), pos(pos) {}
+};
+
+int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& last_endpoint, std::vector<int> &splits)
+{
+    report5("next_nfa %d (at pos %d `%s`), %s%s ",current,pos,next_char.str(), (nfas[current].can_end?"can end ":""),(nfas[current].epsilon?"epsilon ":""));
+    report5("#matches %d%s lacks %d%s%s\n", (int)nfas[current].matches.size(), 
+        (nfas[current].matches.count(next_char)?"in match ":""), 
+        (int)nfas[current].lacks.size(), 
+        (nfas[current].lacks.count(next_char) ? "in lacks " : ""), 
+        (nfas[current].or_nfa != -1?"has_or ":""));
+    if (nfas[current].can_end && (last_endpoint.pos < pos || nfas[current].end_priority > last_endpoint.priority)) {
+        report1("found valid end from %d\n", current);
+        last_endpoint.found = current;
+        last_endpoint.priority = nfas[current].end_priority;
+        last_endpoint.pos = pos;
+    }
+    if (nfas[current].or_nfa != -1) {
+        report2("pushing or %d from %d\n", nfas[current].or_nfa,current);
+        splits.push_back(nfas[current].or_nfa);
+    }
+    if (nfas[current].epsilon) { 
+        report2("forward on epsilon from %d to %d\n", current, nfas[current].match_nfa);
+        return next_nfa(next_char, pos, nfas[current].match_nfa, last_endpoint, splits); 
+    }
+    else {
+        if (((nfas[current].range_positive_count == 0 && nfas[current].range_negative_count != 0) || nfas[current].matches.count(next_char) != 0) && 0 == nfas[current].lacks.count(next_char)) {
+            report3("forward on match from %d to %d %s\n", current, nfas[current].match_nfa,(nfas[current].matches.count(next_char) != 0?"on positive match":""));
+            return nfas[current].match_nfa;
+        }else return nfas[current].no_match_nfa;
+    }
+}
+
+bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
+{
+    for (;;) {
+        last_found_nfa last(pos);
+        int cur_pos = pos;
+
+        std::vector<int> concurrent = nfa_start_states;
+        while (concurrent.size() > 0) {
+            report2("***about to start loop over %d elements for `%s`\n", (int)concurrent.size(),source[pos].str());
+            for (int state_index = 0; state_index < concurrent.size(); ++state_index) {
+                report4("at parallel state %d of %d, nfa# %d called %s \n", state_index, (int)concurrent.size(), concurrent[state_index], nfas[concurrent[state_index]].name.str());
+                int next_state = next_nfa(source[cur_pos], pos, concurrent[state_index], last, concurrent);
+                if (next_state < 0) {
+                    report2("state ended %d of %d\n", state_index, (int)concurrent.size());
+                    concurrent.erase(concurrent.cbegin() + state_index);
+                    --state_index;
+                }
+                else concurrent[state_index] = next_state;
+            }
+        }
+        if (last.found >= 0) {
+            if (nfas[last.found].end_priority == -3) continue;//skip
+            found = &nfas[last.found].name;
+            pos = last.pos;
+
+            return true;
+        }
+        return false;
+    }
+}
+/* nfa_end_ret should have success setable 
+ * nfa_start_ret should have or settable 
+ */
+/*
+//character see https://github.com/kkos/oniguruma/blob/master/doc/RE
+// https://github.com/KenDickey/Cuis-Smalltalk-UniCodePoint-Properties/blob/master/System-Text-UnicodeSupport.pck.st
+//\special character t v n r b f a e \777 \xhh \x{7HHHHHHH} \uHHHH "
+  \t           horizontal tab         (0x09)
+  \v           vertical tab           (0x0B)
+  \n           newline (line feed)    (0x0A)
+  \r           carriage return        (0x0D)
+  \b           backspace              (0x08)
+  \f           form feed              (0x0C)
+  \a           bell                   (0x07)
+  \e           escape                 (0x1B)
+  \nnn         octal char                    (encoded byte value)
+  \xHH         hexadecimal char              (encoded byte value)
+  \x{7HHHHHHH} (1-8 digits) hexadecimal char (code point value)
+  \o{17777777777} (1-11 digits) octal char   (code point value)
+  \uHHHH       hexadecimal char              (code point value)//
+// 
+//[] range, character or type list
+//\p{} unicode elemement
+//:ascii class:
+alnum
+alpha
+ascii
+blank
+cntrl
+digit
+graph 
+punct
+space
+upper
+xdigit
+word
+
+//:^ascii class:
+//alignment ^ $ 
+//(parse_reg_or)
+*/
+bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int &priority);
+bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int &priority) 
+{
+    uint8_t errorbuf[200];
+    
+    while (s[pos] == " ") ++pos;
+    if (s[pos] == "") return false;
+    if (s[pos] == "(") {
+        ++pos;
+        int pri = priority;
+        bool succeeded = parse_reg_or(s, pos, nfa_start_ret, nfa_end_ret, production_name,pri);
+        
+        if (pri < priority)priority = pri;
+        
+        while (s[pos] == " ") ++pos;
+        
+        if (s[pos] != ")") {
+            
+            (GraphemeString("in production ") + production_name + " ) expected.").fill_utf8(errorbuf);
+            lex_error_position = pos;
+            throw std::runtime_error((char*)errorbuf);
+        }
+        ++pos;
+        if (!succeeded){//epsilon
+            int epsilon = nfas.size();
+            nfas.push_back(nfa(production_name));
+            nfa_start_ret = nfa_end_ret = epsilon;
+        }
+        return true;
+    }
+    else if (s[pos] == "\\") {
+        
+        ++pos;
+        uint8_t special = 0;
+        if (s[pos] == "e") special = 0x1b;
+        else if (s[pos] == "t") special = 9;
+        else if (s[pos] == "v") special = 0xb;
+        else if (s[pos] == "n") special = 0xa;
+        else if (s[pos] == "r") special = 0xd;
+        else if (s[pos] == "b") special = 8;
+        else if (s[pos] == "f") special = 0xc;
+        else if (s[pos] == "a") special = 7;
+        else if (s[pos] == "e") special = 0x1b;
+        else if (s[pos] == "") {
+            
+            (GraphemeString("in production ") + production_name + " character expected after backslash.").fill_utf8(errorbuf);
+            lex_error_position = pos;
+            throw std::runtime_error((char*)errorbuf);
+        }
+        
+        int r = nfas.size();
+        nfas.push_back(nfa(production_name));
+        nfas[r].epsilon = false;
+        
+        nfa_start_ret = nfa_end_ret = r;
+        if (special != 0) {
+            nfas[r].matches_char(special);
+        }else nfas[r].matches.insert(s[pos++]);
+        
+        nfa_start_ret = nfa_end_ret = r;
+        return true;
+    }
+    else if (s[pos] == ":") {
+       
+        if (s[pos + 5] == ":") {
+            if (s.slice(pos + 1, pos + 4) == "word") {
+                if (priority > -1) priority = -1;
+                pos += 6;
+               
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('a', 'z');
+                nfas[r].matches_ascii_range('A', 'Z');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+        }
+        else if (s[pos + 6] == ":") {
+            auto w = s.slice(pos + 1, pos + 5);
+            if (w == "alnum") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('a', 'z');
+                nfas[r].matches_ascii_range('A', 'Z');
+                nfas[r].matches_ascii_range('0', '9');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "ascii") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range(0, 127);
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+                pos += 7;
+            }
+            else if (w == "blank") {
+                if (priority > -1) priority = -1;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_char(9);
+                nfas[r].matches_char(0x20);
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+                pos += 7;
+            }
+            else if (w == "cntrl") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range(1, 10);
+                nfas[r].matches_ascii_range(0xe, 0x1f);
+                nfas[r].matches_char(0x7f);
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "digit") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('0', '9');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "lower") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('a', 'z');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "graph") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('!', '~');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "print") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range(' ', '~');
+                nfas[r].matches_char('\t');
+                nfas[r].matches_char('\n');
+                nfas[r].matches_char('\r');
+                nfas[r].matches_char(0x0b);
+                nfas[r].matches_char(0x20);
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "punct") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('!', '\\');
+                nfas[r].matches_ascii_range(':', '@');
+                nfas[r].matches_ascii_range('[', '`');
+                nfas[r].matches_ascii_range('{', '~');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "space") {
+                if (priority > -1) priority = -1;
+                pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_char(' ');
+                nfas[r].matches_char('\t');
+                nfas[r].matches_char('\n');
+                nfas[r].matches_char('\r');
+                nfas[r].matches_char(0x0b);
+                nfas[r].matches_char(0x20);
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+            else if (w == "upper") {
+            if (priority > -1) priority = -1;
+            pos += 7;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('A', 'Z');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+        }
+        else if (s[pos + 7] == ":") {
+            if (s.slice(pos + 1, pos + 6) == "xdigit") {
+                if (priority > -1) priority = -1;
+                pos += 8;
+                int r = nfas.size();
+                nfas.push_back(nfa(production_name));
+                nfas[r].matches_ascii_range('a', 'f');
+                nfas[r].matches_ascii_range('A', 'F');
+                nfas[r].matches_ascii_range('0', '9');
+                nfa_start_ret = nfa_end_ret = r;
+                return true;
+            }
+        }
+        (GraphemeString("in production ") + production_name + " char class expected after : or colon has to be escaped with at backslash.").fill_utf8(errorbuf);
+        lex_error_position = pos;
+        throw std::runtime_error((char*)errorbuf);
+    }
+    else if (s[pos] == "[") {
+        ++pos;
+        if (priority > -1) priority = -1;
+        while (s[pos] == " ") ++pos;
+        bool neg = false;
+        int r = nfas.size();
+        nfas.push_back(nfa(production_name));
+        while (s[pos] != "" && s[pos]!="]") {
+            if (s[pos] == "^") {
+                ++pos;
+                neg = true;
+            }
+            if (!nfas[r].ProcessPossibleCharClass(s, pos, neg, production_name)) {
+                (GraphemeString("in production ") + production_name + " malformed range.").fill_utf8(errorbuf);
+                lex_error_position = pos;
+                throw std::runtime_error((char*)errorbuf);
+
+            }
+            while (s[pos] == " ") ++pos;
+        }
+        if (s[pos] == "") {
+            (GraphemeString("in production ") + production_name + " expected end of range.").fill_utf8(errorbuf);
+            lex_error_position = pos;
+            throw std::runtime_error((char*)errorbuf);
+        }
+        ++pos;
+        nfa_start_ret = nfa_end_ret = r;
+        return true;
+    }else if (s[pos] == "?" || s[pos] == "*" || s[pos] == "+" || s[pos] == ")") {
+        return false;
+    }else if ( s[pos] == "]" || s[pos] == "}") {
+
+        (GraphemeString("in production ") + production_name + " character or character class expected.").fill_utf8(errorbuf);
+        lex_error_position = pos;
+        throw std::runtime_error((char*)errorbuf);
+    }
+
+    int r = nfas.size();
+    nfas.push_back(nfa(production_name));
+    nfas[r].epsilon = false;
+    nfas[r].matches.insert(s[pos++]);
+    
+    nfa_start_ret = nfa_end_ret= r;
+    return true;
+
+
+}
+
+//parse * + or ?
+bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int &priority) 
+{
+    int se,ne;
+    int pri = priority;
+    
+    if (s[pos] != "" && parse_element(s, pos, se, ne, production_name,pri)) {
+        
+        if (pri < priority) priority = pri;
+        while (s[pos] == " ") ++pos;
+        
+        if (s[pos] == "?") {
+            ++pos;
+            int after = nfas.size();
+            nfas.push_back(nfa(production_name));
+            nfas[se].or_nfa = after;
+            nfas[ne].match_nfa = after;
+            nfa_start_ret = se;
+            nfa_end_ret = after;
+            
+        }
+        else if (s[pos] == "*") {
+            ++pos;
+            int loop = nfas.size();
+            nfas.push_back(nfa(production_name));
+            int after = nfas.size();
+            nfas.push_back(nfa(production_name));
+            nfas[after].or_nfa = se;
+            nfas[loop].match_nfa = after;
+            nfas[ne].match_nfa = loop;
+            nfa_start_ret = loop;
+            nfa_end_ret = after;
+            
+
+        }
+        else if (s[pos] == "+") {
+            ++pos;
+            int loop = nfas.size();
+            nfas.push_back(nfa(production_name));
+            nfas[ne].match_nfa = loop;
+            nfas[loop].or_nfa = se;
+            nfa_start_ret = se;
+            nfa_end_ret = loop;
+            
+        }
+        else {
+            
+            nfa_start_ret = se;
+            nfa_end_ret = ne;
+        }
+        while (s[pos] == " ") ++pos;
+
+        if (s[pos] == "?" || s[pos] == "*" || s[pos] == "+") {
+
+            uint8_t errorbuf[200];
+            (GraphemeString("in production ") + production_name + " can't chain post op operators.").fill_utf8(errorbuf);
+            lex_error_position = pos;
+            throw std::runtime_error((char*)errorbuf);
+        }
+
+        return true;
+    }
+    else return false;
+}
+
+bool parse_concat(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int& priority)
+{
+    int nep;
+    bool first = true;
+    
+    for (;;) {
+        int ns, ne;
+        int p = pos;
+        int pri = priority;
+
+        if (s[p]!="" && parse_post(s, p, ns, ne, production_name, pri)) {
+            
+            if (pri < priority) priority = pri;
+            pos = p;
+            if (first) {
+                first = false;
+                nfa_start_ret = ns;
+            }
+            else {
+                nfas[nep].match_nfa = ns;
+                
+            }
+            nep = ne;
+        }
+        else {
+            if (first) return false;
+            nfa_end_ret = nep;
+            return true;
+        }
+    }
+}
+
+//note, ending with a | makes and or to empty match the same as enclosing the or in a ()?
+bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  GraphemeString &production_name, int &priority)
+{
+    
+    int p = pos;
+    int ns, ne;
+    int f = nfas.size();
+//    bool first = true;
+    nfas.push_back(nfa(production_name));
+    
+    int pri = priority;
+    if (s[p] != "" && parse_concat(s, p, ns, ne, production_name,pri)) {
+        
+        if (pri < priority) priority = pri;
+//        int b = nfas.size();
+//        nfas.push_back(nfa(production_name));
+//        nfas[b].match_nfa = ns;
+        
+        nfa_start_ret = ns;
+        for (;;) {
+            pos = p;
+            nfas[ne].match_nfa = f;
+
+            while (s[pos] == " ") ++pos;
+            if (s[pos] != "|") {
+
+                nfa_end_ret = f;
+                return true;
+            }
+
+            p = ++pos;//past |
+            int ns2, ne2;
+            pri = priority;
+
+            if (s[p] != "" && parse_concat(s, p, ns2, ne2, production_name, pri)) {
+
+                if (pri < priority) priority = pri;
+//                first = false;
+                nfas[ns].or_nfa = ns2;
+
+                ns = ns2;
+                ne = ne2;
+            }
+            else {
+                uint8_t errorbuf[200];
+                (GraphemeString("in production ") + production_name + " alternate after | not found").fill_utf8(errorbuf);
+                lex_error_position = pos;
+                throw std::runtime_error((char*)errorbuf);
+            }
+        }
+    }
+    nfas.pop_back();
+    return false;
+}
+
+void lexer_generator::make_nfa(GraphemeString name, GraphemeString expression) {
+    //parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  GraphemeString &production_name)
+    int pos = 0;
+    int priority = 0;
+    int nfa_start, nfa_end;
+    
+    if (expression[pos]!= "" && parse_reg_or(expression, pos, nfa_start, nfa_end, name, priority))
+    {
+        
+        nfa_start_states.push_back(nfa_start);
+        nfas[nfa_end].can_end = true;
+        nfas[nfa_end].end_priority = priority;
+        name_to_nfa.insert(std::make_pair(name, nfa_start));
+        
+    }
+    else {
+        
+        uint8_t errorbuf[200];
+        (GraphemeString("in production ") + name + " can't parse.").fill_utf8(errorbuf);
+        lex_error_position = pos;
+        throw std::runtime_error((char*)errorbuf);
+    }
+}
+void lexer_generator::make_skip_nfa(GraphemeString expression) {
+    GraphemeString name("skip");
+    int pos = 0;
+    int priority = -2;
+    int nfa_start, nfa_end;
+    if (parse_reg_or(expression, pos, nfa_start, nfa_end, name, priority))
+    {
+        nfa_start_states.push_back(nfa_start);
+        nfas[nfa_end].can_end = true;
+        nfas[nfa_end].end_priority = priority;
+    }
+    else {
+        uint8_t errorbuf[200];
+        (GraphemeString("in production ") + name + " can't parse.").fill_utf8(errorbuf);
+        lex_error_position = pos;
+        throw std::runtime_error((char*)errorbuf);
+    }
+}
+std::string mainish(LPSTR source)
+{
+//    GraphemeStringBuilder b;
+
+ //   b << nye << hindi << emojis << diacritics;
+    //b << korean << zalgo;
+    std::ostringstream t;
+    GraphemeString b(source);
+
+/*
+    char* n;
+
+    n = UnicodeToUTF8(emojis);
+    t << "emojis ="<<n<<'\n';
+    free(n);
+
+    n = UnicodeToUTF8(hindi);
+    t << "hindi =" << n << '\n';
+    free(n);
+
+    n = UnicodeToUTF8(nye);
+    t << "nye =" << n << '\n';
+    free(n);
+
+    n = UnicodeToUTF8(diacritics);
+    t << "diacritics =" << n << '\n';
+    free(n);
+
+    n = UnicodeToUTF8(korean);
+    t << "korean =" << n << '\n';
+    free(n);
+
+    n = UnicodeToUTF8(zalgo);
+    t << "zalgo =" << n << '\n';
+    free(n);
+    */
+
+/*
+    GraphemeString bt(b.build());
+    t << "build " << hindi.grapheme_num_codepoints(3) << " done\n";
+    t << "hindi" << hindi << '\n';
+    for (auto a : hindi)t << "forward char '" << a << "'\n";
+    for (auto a = hindi.rbegin(); a != hindi.rend();++a) {
+        t << "char '" << *a << "'\n";
+    }
+    t << "emojis" << emojis << '\n';
+    for (auto a : emojis)t << "forward char '" << a << "'\n";
+    for (auto a = emojis.rbegin(); a != emojis.rend(); ++a) {
+        t << "char '" << *a << "'\n";
+    }
+    t << "nye" << nye << '\n';
+    for (auto a : nye)t << "forward char '" << a << "'\n";
+    for (auto a = nye.rbegin(); a != nye.rend(); ++a) {
+        t << "char '" << *a << "'\n";
+    }
+    t << "diacritics" << diacritics << '\n';
+    for (auto a : diacritics)t << "forward char '" << a << "'\n";
+    for (auto a = diacritics.rbegin(); a != diacritics.rend(); ++a) {
+        t << "char '" << *a << "'\n";
+    }
+    t << "korean" << korean << '\n';
+    for (auto a : korean)t << "forward char '" << a << "'\n";
+    for (auto a = korean.rbegin(); a != korean.rend(); ++a) {
+        t << "char '" << *a << "'\n";
+    }
+    t << "zalgo" << zalgo << '\n';
+    for (auto a : zalgo)t << "forward char '" << a << "'\n";
+    for (auto a = zalgo.rbegin(); a != zalgo.rend(); ++a) {
+        t << "char '" << *a << "'\n";
+    }
+    */
+    //bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
+    
+    GraphemeString* found;
+    int pos = 0;
+    int last_pos = 0;
+    try {
+        while (nfa_parse(found, b, pos)) {
+            t << *found << ": `" << b.slice(last_pos, pos) << "`\n";
+            report2("***%s: `%s`****\n",found->str(), b.slice(last_pos, pos).str2());
+            last_pos = pos;
+        }
+    }
+    catch (std::runtime_error err)
+    {
+        t << err.what()<<'\n';
+    }
+    return t.str();
+}
+
+extern COutputWnd* output_window;
+void init_parser()
+{
+    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+    std::ostringstream t;
+    try{
+#ifdef FULLTEST
+        LexerGen
+            .prod("OPEN_BRACKET", "\\[")
+            .prod("CLOSE_BRACKET", "\\]")
+            .prod("OPEN_PAREN", "\\(")
+            .prod("CLOSE_PAREN", "\\)")
+            .prod("OPEN_BRACE", "\\{")
+            .prod("CLOSE_BRACE", "\\}")
+            .prod("PERIOD", ".")
+            .prod("AMP", "&")
+            .prod("PIPE", "\\|")
+            .prod("AND", "&&")
+            .prod("OR", "\\|\\|")
+            .prod("PLUS", "\\+")
+            .prod("MINUS", "\\-")
+            .prod("TILDE", "~")
+            .prod("MUL", "\\*")
+            .prod("DIV", "/")
+            .prod("BANG", "!")
+            .prod("MOD", "%")
+            .prod("ASSIGN", "=")
+            .prod("ADD_ASSIGN", "\\+=")
+            .prod("SUB_ASSIGN", "\\-=")
+            .prod("MUL_ASSIGN", "\\*=")
+            .prod("DIV_ASSIGN", "/=")
+            .prod("AND_ASSIGN", "&=")
+            .prod("OR_ASSIGN", "\\|=")
+            .prod("XOR_ASSIGN", "^=")
+            .prod("MOD_ASSIGN", "%=")
+            .prod("SHL_ASSIGN", "<<=")
+            .prod("SHR_ASSIGN", ">>=")
+            .prod("XOR", "^")
+            .prod("QMARK", "\\?")
+            .prod("SHL", "<<")
+            .prod("SHR", ">>")
+            .prod("LT", "<")
+            .prod("GT", ">")
+            .prod("LE", "<=")
+            .prod("GE", ">=")
+            .prod("NE", "!=")
+            .prod("EQ", "==")
+            .prod("PREPROCESS_LINE", "#[^\\n]*")//{}{}{} not processed correctly
+            .prod("IDENT", "[_a-zA-Z][_0-9a-zA-Z]*")
+            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
+            .prod("COMMA", ",")
+            .prod("COLON", "\\:")
+            .prod("SEMICOLON", ";")
+            .prod("STRING", "(L|u|U|u8)?R?\"(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\])*\"s?")
+            .prod("CHAR", "(L|u|U|u8)?R?'(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^'\\\\])*'")
+            .prod("NUMBER", "-?(0|[1-9][0-9]*)(.[0-9]+)?([Ee][+\\-]?(0|[1-9][0-9]*))?(u|U)?(d|f|LL|L)?")
+
+        .skip("/\\*[^*]*(\\*[^/][^*]*)*\\*/")
+        .skip("//[^\\n\\r]*[\\r\\n]")
+        .skip("[ \\t\\n\\r]+")
+        ;
+#else
+        LexerGen
+            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
+            .skip("[ \\t\\n\\r]+");
+#endif
+    }
+    catch (std::runtime_error err)
+    {
+        t << err.what() << '\n';
+        output_window->append_string(t.str().c_str());
+    }
+}
+
+#endif

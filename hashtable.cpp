@@ -1,4 +1,4 @@
-#include "..\interactive\stdafx.h"
+#include "stdafx.h"
 
 
 

@@ -40,7 +40,7 @@
  *  Implementation of libutf8proc.
  */
 
-
+#define UTF8PROC_STATIC
 #include "utf8proc.h"
 
 #ifndef SSIZE_MAX

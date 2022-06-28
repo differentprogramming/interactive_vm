@@ -48,14 +48,20 @@
     <ClInclude Include="InputDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Solid Ch3\dirent_for_windows.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="hashtable.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Solid Ch3\hashtable.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="spooky.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Solid Ch3\spooky.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="dirent_for_windows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utf8proc\utf8proc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="grapheme.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -86,13 +92,19 @@
     <ClCompile Include="oldparser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Solid Ch3\dirent_for_windows.cpp">
+    <ClCompile Include="dirent_for_windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Solid Ch3\hashtable.cpp">
+    <ClCompile Include="hashtable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Solid Ch3\spooky.cpp">
+    <ClCompile Include="spooky.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utf8proc\utf8proc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="grapheme.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

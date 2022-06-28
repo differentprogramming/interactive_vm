@@ -35,6 +35,7 @@
 #define report5(f,a,b,c,d,e) _RPTF5(_CRT_WARN, f,a,b,c,d,e)
 #define report6(f,a,b,c,d,e,g) _RPTF6(_CRT_WARN, f,a,b,c,d,e,g)
 
+
 namespace llvm {
     namespace orc {
 
@@ -141,6 +142,18 @@ namespace llvm {
 #include <map>
 
 #include "grapheme.h"
+class debug_set {
+    std::vector<GraphemeString> collection;
+public:
+    void insert(GraphemeString& o) { collection.push_back(o); }
+    size_t size() const { return collection.size(); }
+    int count(GraphemeString& o)
+    {
+        for (int i = (int)collection.size() - 1; i >= 0; --i) if (collection[i] == o) return 1;
+        return 0;
+    }
+};
+
 #ifdef NOOOOO
 extern COutputWnd* output_window;
 extern CMFCStatusBar* status_bar;
@@ -1504,8 +1517,8 @@ static enum class Associativity OpAssoc[TK_NUM_TOKENS];
 #else
 class lexer_generator
 {
-    void make_nfa(GraphemeString name, GraphemeString expression);
-    void make_skip_nfa(GraphemeString expression);
+    void make_nfa(GraphemeString &name, GraphemeString &expression);
+    void make_skip_nfa(GraphemeString &expression);
 public:
     lexer_generator& prod(const char* _name, const wchar_t* _expression)
     {
@@ -1642,8 +1655,8 @@ struct nfa
     int end_priority;
     std::vector<utf8proc_category_t> has_category;
     std::vector<utf8proc_category_t> lacks_category;
-    std::set<GraphemeString> matches;
-    std::set<GraphemeString> lacks;
+    debug_set matches;
+    debug_set lacks;
     int match_nfa; 
     int range_positive_count;
     int range_negative_count;
@@ -1682,7 +1695,7 @@ struct nfa
     //assumes that any ^ or ] or \p{ or :xxxxx: has already been processed
     //for use inside range, special characters aren't special
     GraphemeString read_char(GraphemeString& s, int& pos, GraphemeString & production_name) {
-        while (s[pos] == " ")++pos;
+        //while (s[pos] == " ")++pos;
         auto w = s[pos];
         if (w == "\\"){
             uint8_t buf[2];
@@ -1707,7 +1720,11 @@ struct nfa
             }
             buf[0] = special;
             ++pos;
-            if (special != 0) return GraphemeString(buf);
+            if (special != 0) {
+                report1("read_char found special character %d\n",(int)buf[0]);
+                return GraphemeString(buf);
+            }
+            report1("read_char found `%s`\n",w2.str());
             return w2;
         }
         ++pos;
@@ -1716,7 +1733,7 @@ struct nfa
     bool ProcessPossibleCharClass(GraphemeString& s, int& pos, bool negate, GraphemeString& production_name) 
     {
         uint8_t errorbuf[200];
-        while (s[pos] == " ")++pos;
+        //while (s[pos] == " ")++pos;
         auto w = s[pos];
         if (w == ":") {
             if (s[pos + 5] == ":") {
@@ -1838,7 +1855,7 @@ struct nfa
                 auto first = read_char(s,pos, production_name);
                 int32_t first_codepoint;
                 first.fill_codepoints(&first_codepoint, false);
-                while (s[pos] == " ")++pos;
+                //while (s[pos] == " ")++pos;
                 if (s[pos] == "-") {
                     ++pos;
                     if (first.codepoint_length() > 1) {
@@ -1846,7 +1863,7 @@ struct nfa
                         lex_error_position = pos;
                         throw std::runtime_error((char*)errorbuf);
                     }
-                    while (s[pos] == " ")++pos;
+                    //while (s[pos] == " ")++pos;
                     if (s[pos] == "]" || s[pos] == "^" || s[pos]=="" || (s[pos] == "\\" && (s[pos+1] == "p"|| s[pos + 1] == "P"))) {
                         (GraphemeString("in production ") + production_name + " end of range missing.").fill_utf8(errorbuf);
                         lex_error_position = pos;
@@ -1867,6 +1884,7 @@ struct nfa
                         first_codepoint = second_codepoint;
                         second_codepoint = t;
                     }
+                    report3("%s codepoint range from %d to %d\n",(negate?"Subtracting":"Adding"),first_codepoint,second_codepoint);
                     for (int32_t i = first_codepoint; i <= second_codepoint; ++i) {
                         int32_t b[2];
                         b[0] = i;
@@ -1876,7 +1894,7 @@ struct nfa
                             lacks.insert(GraphemeString(b));
                         }
                         else {
-                            ++range_negative_count;
+                            ++range_positive_count;
                             matches.insert(GraphemeString(b));
                         }
                     }
@@ -1888,10 +1906,12 @@ struct nfa
                 epsilon = false;
                 if (negate) {
                     ++range_negative_count;
+                    report1("subtract codepoint from charset %d\n", (int)b[0]);
                     lacks.insert(GraphemeString(b));
                 }
                 else {
-                    ++range_negative_count;
+                    ++range_positive_count;
+                    report1("add codepoint to charset %d\n", (int)b[0]);
                     matches.insert(GraphemeString(b));
                 }
                 return true;
@@ -1917,26 +1937,33 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
 {
     report5("next_nfa %d (at pos %d `%s`), %s%s ",current,pos,next_char.str(), (nfas[current].can_end?"can end ":""),(nfas[current].epsilon?"epsilon ":""));
     report5("#matches %d%s lacks %d%s%s\n", (int)nfas[current].matches.size(), 
-        (nfas[current].matches.count(next_char)?"in match ":""), 
+        (nfas[current].matches.count(next_char)?" in match ":""), 
         (int)nfas[current].lacks.size(), 
-        (nfas[current].lacks.count(next_char) ? "in lacks " : ""), 
+        (nfas[current].lacks.count(next_char) ? " in lacks " : ""), 
         (nfas[current].or_nfa != -1?"has_or ":""));
-    if (nfas[current].can_end && (last_endpoint.pos < pos || nfas[current].end_priority > last_endpoint.priority)) {
-        report1("found valid end from %d\n", current);
-        last_endpoint.found = current;
-        last_endpoint.priority = nfas[current].end_priority;
-        last_endpoint.pos = pos;
+    if (nfas[current].can_end){
+        report("FOUND POSSIBLE END\n");
+        if (last_endpoint.pos < pos || nfas[current].end_priority > last_endpoint.priority) {
+            report1("found valid end from %d\n", current);
+            last_endpoint.found = current;
+            last_endpoint.priority = nfas[current].end_priority;
+            last_endpoint.pos = pos;
+        }
     }
     if (nfas[current].or_nfa != -1) {
         report2("pushing or %d from %d\n", nfas[current].or_nfa,current);
         splits.push_back(nfas[current].or_nfa);
     }
-    if (nfas[current].epsilon) { 
+    if (nfas[current].epsilon && nfas[current].match_nfa != -1) {
         report2("forward on epsilon from %d to %d\n", current, nfas[current].match_nfa);
         return next_nfa(next_char, pos, nfas[current].match_nfa, last_endpoint, splits); 
     }
     else {
-        if (((nfas[current].range_positive_count == 0 && nfas[current].range_negative_count != 0) || nfas[current].matches.count(next_char) != 0) && 0 == nfas[current].lacks.count(next_char)) {
+        if (((nfas[current].range_positive_count == 0 && nfas[current].range_negative_count != 0) || 
+            //(next_char=="o" || 
+                nfas[current].matches.count(next_char) != 0
+                //)//{}{}{} test
+            ) && 0 == nfas[current].lacks.count(next_char)) {
             report3("forward on match from %d to %d %s\n", current, nfas[current].match_nfa,(nfas[current].matches.count(next_char) != 0?"on positive match":""));
             return nfas[current].match_nfa;
         }else return nfas[current].no_match_nfa;
@@ -1951,10 +1978,10 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
 
         std::vector<int> concurrent = nfa_start_states;
         while (concurrent.size() > 0) {
-            report2("***about to start loop over %d elements for `%s`\n", (int)concurrent.size(),source[pos].str());
+            report2("***about to start loop over %d elements for `%s`\n", (int)concurrent.size(),source[cur_pos].str());
             for (int state_index = 0; state_index < concurrent.size(); ++state_index) {
                 report4("at parallel state %d of %d, nfa# %d called %s \n", state_index, (int)concurrent.size(), concurrent[state_index], nfas[concurrent[state_index]].name.str());
-                int next_state = next_nfa(source[cur_pos], pos, concurrent[state_index], last, concurrent);
+                int next_state = next_nfa(source[cur_pos], cur_pos, concurrent[state_index], last, concurrent);
                 if (next_state < 0) {
                     report2("state ended %d of %d\n", state_index, (int)concurrent.size());
                     concurrent.erase(concurrent.cbegin() + state_index);
@@ -1962,14 +1989,20 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
                 }
                 else concurrent[state_index] = next_state;
             }
+            ++cur_pos;
         }
         if (last.found >= 0) {
-            if (nfas[last.found].end_priority == -3) continue;//skip
+            if (nfas[last.found].end_priority == -3) {
+                report3("SKIPPING %s from %d to %d\n", nfas[last.found].name.str(), pos, last.pos);
+                continue;//skip
+            }
             found = &nfas[last.found].name;
+            report3("FOUND TOKEN %s from %d to %d\n",found->str(),pos, last.pos);
             pos = last.pos;
 
             return true;
         }
+        report("NO TOKENS FOUND");
         return false;
     }
 }
@@ -2232,7 +2265,6 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
     else if (s[pos] == "[") {
         ++pos;
         if (priority > -1) priority = -1;
-        while (s[pos] == " ") ++pos;
         bool neg = false;
         int r = nfas.size();
         nfas.push_back(nfa(production_name));
@@ -2247,7 +2279,6 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 throw std::runtime_error((char*)errorbuf);
 
             }
-            while (s[pos] == " ") ++pos;
         }
         if (s[pos] == "") {
             (GraphemeString("in production ") + production_name + " expected end of range.").fill_utf8(errorbuf);
@@ -2257,7 +2288,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
         ++pos;
         nfa_start_ret = nfa_end_ret = r;
         return true;
-    }else if (s[pos] == "?" || s[pos] == "*" || s[pos] == "+" || s[pos] == ")") {
+    }else if (s[pos] == "|" || s[pos] == "?" || s[pos] == "*" || s[pos] == "+" || s[pos] == ")") {
         return false;
     }else if ( s[pos] == "]" || s[pos] == "}") {
 
@@ -2269,6 +2300,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
     int r = nfas.size();
     nfas.push_back(nfa(production_name));
     nfas[r].epsilon = false;
+    report2("element matched %s for state %d\n", s[pos].str(),r);
     nfas[r].matches.insert(s[pos++]);
     
     nfa_start_ret = nfa_end_ret= r;
@@ -2292,9 +2324,13 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
             ++pos;
             int after = nfas.size();
             nfas.push_back(nfa(production_name));
+            int can_or = nfas.size();
+            nfas.push_back(nfa(production_name));
+
+            nfas[can_or].match_nfa = se;
             nfas[se].or_nfa = after;
             nfas[ne].match_nfa = after;
-            nfa_start_ret = se;
+            nfa_start_ret = can_or;
             nfa_end_ret = after;
             
         }
@@ -2378,14 +2414,15 @@ bool parse_concat(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
 bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  GraphemeString &production_name, int &priority)
 {
     
-    int p = pos;
+    //int p = pos;
     int ns, ne;
     int f = nfas.size();
+
 //    bool first = true;
     nfas.push_back(nfa(production_name));
     
     int pri = priority;
-    if (s[p] != "" && parse_concat(s, p, ns, ne, production_name,pri)) {
+    if (s[pos] != "" && parse_concat(s, pos, ns, ne, production_name,pri)) {
         
         if (pri < priority) priority = pri;
 //        int b = nfas.size();
@@ -2394,7 +2431,7 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
         
         nfa_start_ret = ns;
         for (;;) {
-            pos = p;
+            //pos = p;
             nfas[ne].match_nfa = f;
 
             while (s[pos] == " ") ++pos;
@@ -2404,11 +2441,12 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
                 return true;
             }
 
-            p = ++pos;//past |
+            report1("found | in %s\n",production_name.str());
+            ++pos;//past |
             int ns2, ne2;
             pri = priority;
 
-            if (s[p] != "" && parse_concat(s, p, ns2, ne2, production_name, pri)) {
+            if (s[pos] != "" && parse_concat(s, pos, ns2, ne2, production_name, pri)) {
 
                 if (pri < priority) priority = pri;
 //                first = false;
@@ -2429,7 +2467,7 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
     return false;
 }
 
-void lexer_generator::make_nfa(GraphemeString name, GraphemeString expression) {
+void lexer_generator::make_nfa(GraphemeString &name, GraphemeString &expression) {
     //parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  GraphemeString &production_name)
     int pos = 0;
     int priority = 0;
@@ -2452,7 +2490,7 @@ void lexer_generator::make_nfa(GraphemeString name, GraphemeString expression) {
         throw std::runtime_error((char*)errorbuf);
     }
 }
-void lexer_generator::make_skip_nfa(GraphemeString expression) {
+void lexer_generator::make_skip_nfa(GraphemeString &expression) {
     GraphemeString name("skip");
     int pos = 0;
     int priority = -2;
@@ -2549,7 +2587,7 @@ std::string mainish(LPSTR source)
     try {
         while (nfa_parse(found, b, pos)) {
             t << *found << ": `" << b.slice(last_pos, pos) << "`\n";
-            report2("***%s: `%s`****\n",found->str(), b.slice(last_pos, pos).str2());
+            report2("***%s: `%s`****\n",found->str(), b.slice(last_pos, pos).str());
             last_pos = pos;
         }
     }
@@ -2623,7 +2661,8 @@ void init_parser()
         ;
 #else
         LexerGen
-            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
+            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert");
+        LexerGen
             .skip("[ \\t\\n\\r]+");
 #endif
     }

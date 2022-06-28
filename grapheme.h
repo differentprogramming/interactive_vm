@@ -10,7 +10,11 @@ extern char GSTemp3[GSTEMPLEN];
 extern char GSTemp4[GSTEMPLEN];
 extern char GSTemp5[GSTEMPLEN];
 extern char GSTemp6[GSTEMPLEN];
-
+extern char GSTemp7[GSTEMPLEN];
+extern char GSTemp8[GSTEMPLEN];
+#define NUMGSTEMPS 8 
+extern char* GSTempIndex[8];
+extern int CurGSTemp;
 struct MyFreeDeleter { // deleter
 	void operator() (uint8_t* p) {
 		free(p);
@@ -118,38 +122,9 @@ public:
 
 	const char *str()
 	{
-		fill_utf8n((uint8_t *)&GSTemp1[0], GSTEMPLEN);
-		return GSTemp1;
-	}
-	const char* str1()
-	{
-		fill_utf8n((uint8_t*)&GSTemp1[0], GSTEMPLEN);
-		return GSTemp1;
-	}
-	const char* str2()
-	{
-		fill_utf8n((uint8_t*)&GSTemp2[0], GSTEMPLEN);
-		return GSTemp2;
-	}
-	const char* str3()
-	{
-		fill_utf8n((uint8_t*)&GSTemp3[0], GSTEMPLEN);
-		return GSTemp3;
-	}
-	const char* str4()
-	{
-		fill_utf8n((uint8_t*)&GSTemp4[0], GSTEMPLEN);
-		return GSTemp4;
-	}
-	const char* str5()
-	{
-		fill_utf8n((uint8_t*)&GSTemp5[0], GSTEMPLEN);
-		return GSTemp5;
-	}
-	const char* str6()
-	{
-		fill_utf8n((uint8_t*)&GSTemp6[0], GSTEMPLEN);
-		return GSTemp6;
+		int i = ++CurGSTemp&(NUMGSTEMPS-1);
+		fill_utf8n((uint8_t *)&GSTempIndex[i][0], GSTEMPLEN);
+		return GSTempIndex[i];
 	}
 
 	void fill_codepoints(int32_t* dest, bool null_terminate = true) const {

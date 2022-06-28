@@ -7,6 +7,12 @@ char GSTemp3[GSTEMPLEN];
 char GSTemp4[GSTEMPLEN];
 char GSTemp5[GSTEMPLEN];
 char GSTemp6[GSTEMPLEN];
+char GSTemp7[GSTEMPLEN];
+char GSTemp8[GSTEMPLEN];
+char* GSTempIndex[NUMGSTEMPS] = {
+	GSTemp1,GSTemp2,GSTemp3,GSTemp4,GSTemp5,GSTemp6,GSTemp7,GSTemp8
+};
+int CurGSTemp=0;
 
 /*UTF8PROC_NULLTERM UTF8PROC_STABLE UTF8PROC_COMPOSE
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_map(

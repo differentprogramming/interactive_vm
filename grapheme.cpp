@@ -186,7 +186,7 @@ void GraphemeString_letter::load(const uint8_t* source)
 			+ utf8proc_iterate(store_normalized + codepoint_to_utf8_index.back(),
 				-1,
 				&codepoint_buffer.back()));
-		if (codepoint_buffer.back() == -1) {
+		if (codepoint_buffer.back() == -1 || codepoint_to_utf8_index.back()> utf8_buffer_size+1) {
 			codepoint_buffer.pop_back();
 			codepoint_to_utf8_index.pop_back();
 			grapheme_to_codepoint_index.push_back(codepoint_index);

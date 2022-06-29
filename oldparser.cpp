@@ -1594,7 +1594,7 @@ GraphemeString nye(L"ñññññññ"),
  diacritics(L"Ĺo͂řȩm̅"),
  korean(L"뎌쉐"),
  zalgo(L"Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞");
- */
+ 
 GraphemeString source1(L"ñññññññअनुच्छेद🌷🎁💩😜👍🏳️‍🌈Ĺo͂řȩm̅뎌쉐Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞");
 GraphemeString source2 = source1.slice(7, -1);
 
@@ -1604,7 +1604,7 @@ emojis = source2.slice(5, 10).deep_copy(),
 diacritics = source2.slice(11, 15).deep_copy(),
 korean = source2.slice(16, 17).deep_copy(),
 zalgo = source2.slice(18,-1).deep_copy();
-
+*/
 struct unicode_property {
     utf8proc_category_t value;
     const char* name;
@@ -1674,23 +1674,32 @@ struct nfa
         for (char i = a; i <= b; ++i) {
             buf[0] = i;
             if (negate) {
+                if (i == '\n') lacks.insert(GraphemeString("\r\n"));
                 lacks.insert(GraphemeString(buf));
                 ++range_negative_count;
             }
             else {
                 ++range_positive_count;
+                if (i == '\n') matches.insert(GraphemeString("\r\n"));
                 matches.insert(GraphemeString(buf));
             }
         }
     }
+
     void matches_char(char a, bool negate = false) {
         epsilon = false;
         char buf[2];
         buf[0] = a;
         buf[1] = 0;
 
-        if (negate) lacks.insert(GraphemeString(buf));
-        else matches.insert(GraphemeString(buf));
+        if (negate) { 
+            lacks.insert(GraphemeString(buf)); 
+            if (a == '\n') lacks.insert(GraphemeString("\r\n"));
+        }
+        else { 
+            matches.insert(GraphemeString(buf)); 
+            if (a == '\n') matches.insert(GraphemeString("\r\n"));
+        }
     }
     //assumes that any ^ or ] or \p{ or :xxxxx: has already been processed
     //for use inside range, special characters aren't special
@@ -1757,6 +1766,7 @@ struct nfa
                 else if (w == "ascii") {
                     pos += 7;
                     matches_ascii_range(0, 127,negate);
+
                     epsilon = false;
                     return true;
                 }
@@ -1770,6 +1780,7 @@ struct nfa
                 else if (w == "cntrl") {
                     pos += 7;
                     matches_ascii_range(1, 10, negate);
+
                     matches_ascii_range(0xe, 0x1f, negate);
                     matches_char(0x7f, negate);
                     epsilon = false;
@@ -1799,6 +1810,7 @@ struct nfa
                     matches_char('\t', negate);
                     matches_char('\n', negate);
                     matches_char('\r', negate);
+
                     matches_char(0x0b, negate);
                     matches_char(0x20, negate);
                     epsilon = false;
@@ -1819,6 +1831,7 @@ struct nfa
                     matches_char('\t', negate);
                     matches_char('\n', negate);
                     matches_char('\r', negate);
+
                     matches_char(0x0b, negate);
                     matches_char(0x20, negate);
                     epsilon = false;
@@ -1891,10 +1904,12 @@ struct nfa
                         b[1] = 0;
                         if (negate) {
                             ++range_negative_count;
+                            if (i == '\n') lacks.insert(GraphemeString("\r\n"));
                             lacks.insert(GraphemeString(b));
                         }
                         else {
                             ++range_positive_count;
+                            if (i == '\n') matches.insert(GraphemeString("\r\n"));
                             matches.insert(GraphemeString(b));
                         }
                     }
@@ -1944,7 +1959,7 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
     if (nfas[current].can_end){
         report("FOUND POSSIBLE END\n");
         if (last_endpoint.pos < pos || nfas[current].end_priority > last_endpoint.priority) {
-            report1("found valid end from %d\n", current);
+            report1("found valid end from %d at priority %d\n", current, nfas[current].end_priority);
             last_endpoint.found = current;
             last_endpoint.priority = nfas[current].end_priority;
             last_endpoint.pos = pos;
@@ -1970,8 +1985,9 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
     }
 }
 
-bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
+bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos, int &startpos)
 {
+    startpos = pos;
     for (;;) {
         last_found_nfa last(pos);
         int cur_pos = pos;
@@ -1992,13 +2008,15 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
             ++cur_pos;
         }
         if (last.found >= 0) {
-            if (nfas[last.found].end_priority == -3) {
+            if (nfas[last.found].end_priority == -2) {
                 report3("SKIPPING %s from %d to %d\n", nfas[last.found].name.str(), pos, last.pos);
+                pos = last.pos;
+                startpos = pos;
                 continue;//skip
             }
             found = &nfas[last.found].name;
             report3("FOUND TOKEN %s from %d to %d\n",found->str(),pos, last.pos);
-            pos = last.pos;
+            pos = last.pos-1;
 
             return true;
         }
@@ -2118,6 +2136,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'z');
                 nfas[r].matches_ascii_range('A', 'Z');
                 nfa_start_ret = nfa_end_ret = r;
@@ -2131,6 +2150,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'z');
                 nfas[r].matches_ascii_range('A', 'Z');
                 nfas[r].matches_ascii_range('0', '9');
@@ -2142,7 +2162,9 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range(0, 127);
+
                 nfa_start_ret = nfa_end_ret = r;
                 return true;
                 pos += 7;
@@ -2151,6 +2173,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_char(9);
                 nfas[r].matches_char(0x20);
                 nfa_start_ret = nfa_end_ret = r;
@@ -2162,8 +2185,10 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range(1, 10);
                 nfas[r].matches_ascii_range(0xe, 0x1f);
+//                nfas[r].matches_char(GraphemeString("\r\n"));
                 nfas[r].matches_char(0x7f);
                 nfa_start_ret = nfa_end_ret = r;
                 return true;
@@ -2173,6 +2198,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('0', '9');
                 nfa_start_ret = nfa_end_ret = r;
                 return true;
@@ -2182,6 +2208,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'z');
                 nfa_start_ret = nfa_end_ret = r;
                 return true;
@@ -2191,6 +2218,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('!', '~');
                 nfa_start_ret = nfa_end_ret = r;
                 return true;
@@ -2200,10 +2228,12 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range(' ', '~');
                 nfas[r].matches_char('\t');
                 nfas[r].matches_char('\n');
                 nfas[r].matches_char('\r');
+
                 nfas[r].matches_char(0x0b);
                 nfas[r].matches_char(0x20);
                 nfa_start_ret = nfa_end_ret = r;
@@ -2214,6 +2244,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('!', '\\');
                 nfas[r].matches_ascii_range(':', '@');
                 nfas[r].matches_ascii_range('[', '`');
@@ -2226,10 +2257,12 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_char(' ');
                 nfas[r].matches_char('\t');
                 nfas[r].matches_char('\n');
                 nfas[r].matches_char('\r');
+
                 nfas[r].matches_char(0x0b);
                 nfas[r].matches_char(0x20);
                 nfa_start_ret = nfa_end_ret = r;
@@ -2240,6 +2273,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
             pos += 7;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('A', 'Z');
                 nfa_start_ret = nfa_end_ret = r;
                 return true;
@@ -2251,6 +2285,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 8;
                 int r = nfas.size();
                 nfas.push_back(nfa(production_name));
+                nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'f');
                 nfas[r].matches_ascii_range('A', 'F');
                 nfas[r].matches_ascii_range('0', '9');
@@ -2356,6 +2391,7 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
             nfas[loop].or_nfa = se;
             nfa_start_ret = se;
             nfa_end_ret = loop;
+            report3("********** + loop=%d start=%d end=%d\n", loop, se, ne);
             
         }
         else {
@@ -2497,9 +2533,10 @@ void lexer_generator::make_skip_nfa(GraphemeString &expression) {
     int nfa_start, nfa_end;
     if (parse_reg_or(expression, pos, nfa_start, nfa_end, name, priority))
     {
+        report1("*******skip nfa %d is possible end*****************", nfa_end);
         nfa_start_states.push_back(nfa_start);
         nfas[nfa_end].can_end = true;
-        nfas[nfa_end].end_priority = priority;
+        nfas[nfa_end].end_priority = -2;
     }
     else {
         uint8_t errorbuf[200];
@@ -2510,13 +2547,27 @@ void lexer_generator::make_skip_nfa(GraphemeString &expression) {
 }
 std::string mainish(LPSTR source)
 {
-//    GraphemeStringBuilder b;
+
+    GraphemeString b(source);
+ //   GraphemeStringBuilder b;
 
  //   b << nye << hindi << emojis << diacritics;
     //b << korean << zalgo;
     std::ostringstream t;
-    GraphemeString b(source);
+/*
+    char* src = "a\r\nb";
 
+    for (int i = 0; 0 != src[i]; ++i) {
+        t << (int)src[i] << ' ';
+    }
+
+    t << '\n';
+    GraphemeString b(src);
+
+    for (int i = 0; 0 != b.grapheme_at(i); ++i) {
+        t << b.grapheme_at(i) <<' '<< b.grapheme_at(i,1) << ',';
+    }
+*/
 /*
     char* n;
 
@@ -2580,21 +2631,32 @@ std::string mainish(LPSTR source)
     }
     */
     //bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
-    
+ /*   GraphemeString test("121 auto");
+    t << " '123'.size() " << GraphemeString("123") <<" = " << GraphemeString("123").size() << " byte length " << GraphemeString("123").byte_length() << " codepoint length " << GraphemeString("123").codepoint_length() << '\n';
+    GraphemeString t2("0123456789");
+    t << " 2-5 " << t2.slice(2, 5) << " [3] " << t2[3] << "slice eq test " << (t2[2] == "2" ? " pass0 " : " fail0 ") << (t2[1] == "1" ? " pass1 " : " fail1 ")
+        << (t2.slice(2, 3) == "23" ? " pass2 " : " fail2 ") << '\n';
+
+
+    t << "n " << (test[0]=="1"?"pass0 ":"fail0 ") << " r " << (test[1] == GraphemeString("2a")[0] ? "pass1 " : "fail1 ")  << " n "  << (test[2] == "1" ? "pass2 " : "fail2 ") <<
+        " s " << (test[3] == " " ? "pass3 " : "fail3 ") << " a " << (test[4] == "a" ? "pass4 " : "fail4 ") << "' \n";
+*/
     GraphemeString* found;
     int pos = 0;
-    int last_pos = 0;
+    int startpos = 0;
+    ///*
     try {
-        while (nfa_parse(found, b, pos)) {
-            t << *found << ": `" << b.slice(last_pos, pos) << "`\n";
-            report2("***%s: `%s`****\n",found->str(), b.slice(last_pos, pos).str());
-            last_pos = pos;
+        while (nfa_parse(found, b, pos, startpos)) {
+            t << *found << ": `" << b.slice(startpos, pos) << "`\n";
+            report2("***%s: `%s`****\n",found->str(), b.slice(startpos, pos).str());
+            ++pos;
         }
     }
     catch (std::runtime_error err)
     {
         t << err.what()<<'\n';
     }
+    //*/
     return t.str();
 }
 
@@ -2604,6 +2666,7 @@ void init_parser()
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
     std::ostringstream t;
     try{
+#define FULLTEST
 #ifdef FULLTEST
         LexerGen
             .prod("OPEN_BRACKET", "\\[")
@@ -2625,6 +2688,7 @@ void init_parser()
             .prod("BANG", "!")
             .prod("MOD", "%")
             .prod("ASSIGN", "=")
+            .prod("POINTSTO", "->")
             .prod("ADD_ASSIGN", "\\+=")
             .prod("SUB_ASSIGN", "\\-=")
             .prod("MUL_ASSIGN", "\\*=")
@@ -2657,13 +2721,16 @@ void init_parser()
 
         .skip("/\\*[^*]*(\\*[^/][^*]*)*\\*/")
         .skip("//[^\\n\\r]*[\\r\\n]")
-        .skip("[ \\t\\n\\r]+")
+        .skip(":space:+")
         ;
 #else
+        
         LexerGen
-            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert");
+            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
+            ;
         LexerGen
-            .skip("[ \\t\\n\\r]+");
+            .skip(":space:+");
+        
 #endif
     }
     catch (std::runtime_error err)

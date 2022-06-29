@@ -99,10 +99,10 @@ class GraphemeString {
 	int grapheme_end_slice_index() const { return g_end; }
 
 	int codepoint_start_slice_index() const { return source->grapheme_to_codepoint_index[g_start]; }
-	int codepoint_end_slice_index() const { return source->grapheme_to_codepoint_index[g_end-1]; }
+	int codepoint_end_slice_index() const { return source->grapheme_to_codepoint_index[g_end]; }
 
 	int byte_start_slice_index() const { return source->codepoint_to_utf8_index[source->grapheme_to_codepoint_index[g_start]]; }
-	int byte_end_slice_index() const { return source->codepoint_to_utf8_index[source->grapheme_to_codepoint_index[g_end-1]]; }
+	int byte_end_slice_index() const { return source->codepoint_to_utf8_index[source->grapheme_to_codepoint_index[g_end]]; }
 
 public:
 
@@ -193,29 +193,29 @@ public:
 	GraphemeString slice(int from, int to = INT_MIN) const
 	{
 		if (from < 0) {
-			from += g_end - g_start-1;
+			from += g_end - g_start;
 			if (from < 0) from = 0;
 		}
-		else if (from >= g_end - g_start) from = g_end - g_start-2;
+		else if (from >= g_end - g_start) from = g_end - g_start-1;
 		if (to == INT_MIN) to = from + 1;
 		if (to < 0) {
-			to += g_end - g_start-1;
+			to += g_end - g_start;
 			if (to < 0) to = 0;
 		}
-		else if (to >= g_end - g_start) to = g_end - g_start-2;
+		else if (to >= g_end - g_start) to = g_end - g_start-1;
 		if (from > to) {
 			int t = from;
 			from = to;
 			to = t;
 		}
-		return GraphemeString(source, from + g_start, to + g_start + 2);
+		return GraphemeString(source, from + g_start, to + g_start + 1);
 	}
 	GraphemeString operator[](int i) const
 	{
-		if (i < 0 || i >= grapheme_length()-1) {
+		if (i < 0 || i >= grapheme_length()) {
 			return GraphemeString(&GraphemeString_letter::Null, 0, 1);
 		}
-		return GraphemeString(source, i + g_start, i + g_start + 2);
+		return GraphemeString(source, i + g_start, i + g_start + 1);
 	}
 
 	GraphemeString deep_copy()
@@ -225,15 +225,15 @@ public:
 
 	GraphemeString(const std::vector <GraphemeString> &o) {
 		source = new GraphemeString_letter(o);
-		g_start = 0; g_end = source->grapheme_to_codepoint_index.size() - 1;
+		g_start = 0; g_end = source->grapheme_to_codepoint_index.size() - 2;
 		fill_hash();
 	}
-	GraphemeString(const uint8_t* s) :source(new GraphemeString_letter(s)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 1) { fill_hash(); }
-	GraphemeString(const char* s) :source(new GraphemeString_letter((const uint8_t*)s)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 1)
+	GraphemeString(const uint8_t* s) :source(new GraphemeString_letter(s)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 2) { fill_hash(); }
+	GraphemeString(const char* s) :source(new GraphemeString_letter((const uint8_t*)s)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 2)
 	{
 		fill_hash();
 	}
-	GraphemeString(const char* s,SingletonEnum) :source(new GraphemeString_letter((const uint8_t*)s,Singleton)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 1)
+	GraphemeString(const char* s,SingletonEnum) :source(new GraphemeString_letter((const uint8_t*)s,Singleton)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 2)
 	{
 		fill_hash();
 	}
@@ -245,13 +245,13 @@ public:
 		std::unique_ptr<const uint8_t> ts((const uint8_t*)UnicodeToUTF8(s));
 		source = new GraphemeString_letter(&*ts);
 		g_start = 0;
-		g_end = source->grapheme_to_codepoint_index.size()-1;
+		g_end = source->grapheme_to_codepoint_index.size()-2;
 		fill_hash();
 	}
 	GraphemeString(const int32_t* s) {
 		source = new GraphemeString_letter(s);
 		g_start = 0;
-		g_end = source->grapheme_to_codepoint_index.size() - 1;
+		g_end = source->grapheme_to_codepoint_index.size() - 2;
 		fill_hash();
 	}
 
@@ -315,7 +315,7 @@ public:
 
 		//the probability of the rest of this being anything more than a waste of time is 1:10^38 small.
 		if (size() != o.size()) return false;
-		for (int i = codepoint_start_slice_index(), j = o.codepoint_start_slice_index(); i < codepoint_end_slice_index(); ++i, ++j) {
+		for (int i = codepoint_start_slice_index(), j = o.codepoint_start_slice_index(); i < codepoint_end_slice_index()-1; ++i, ++j) {
 			int32_t a = source->codepoint_buffer[i];
 			int32_t b = o.source->codepoint_buffer[j];
 			if (a != b) {

@@ -79,7 +79,7 @@ int COutputWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	FillBuildWindow();
 //	FillDebugWindow();
 //	FillFindWindow();
-	m_wndOutputBuild.SetLimitText(1000000);
+	m_wndOutputBuild.SetLimitText(20000000);
 	m_wndOutputBuild.append_text(L"oh hai> ");
 	return 0;
 }

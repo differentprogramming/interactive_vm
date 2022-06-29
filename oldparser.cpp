@@ -152,6 +152,7 @@ public:
         for (int i = (int)collection.size() - 1; i >= 0; --i) if (collection[i] == o) return 1;
         return 0;
     }
+
 };
 
 #ifdef NOOOOO
@@ -1666,6 +1667,9 @@ struct nfa
     bool epsilon;
     GraphemeString name;
 
+    nfa & nfa :: operator= (const nfa&) = default;
+    nfa(const nfa&) = default;
+
     nfa(GraphemeString& n) :name(n),match_nfa(-1),no_match_nfa(-1),or_nfa(-1), epsilon(true), can_end(false),end_priority(0), range_positive_count(0),range_negative_count(0){}
     void matches_ascii_range(char a, char b, bool negate = false) {
         epsilon = false;
@@ -1981,7 +1985,11 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
             ) && 0 == nfas[current].lacks.count(next_char)) {
             report3("forward on match from %d to %d %s\n", current, nfas[current].match_nfa,(nfas[current].matches.count(next_char) != 0?"on positive match":""));
             return nfas[current].match_nfa;
-        }else return nfas[current].no_match_nfa;
+        }
+        else {
+            if (nfas[current].no_match_nfa == -1) return -1;
+            return next_nfa(next_char, pos, nfas[current].no_match_nfa, last_endpoint, splits);
+        }
     }
 }
 
@@ -2357,6 +2365,18 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
         
         if (s[pos] == "?") {
             ++pos;
+            if (s[pos] == "+") {
+                ++pos;
+                if (se == ne) {
+                    int f = nfas.size();
+                    nfas.push_back(nfa(production_name));
+                    nfas[se].match_nfa = f;
+                    nfas[se].no_match_nfa = f;
+                    nfa_start_ret = se;
+                    nfa_end_ret = f;
+                    goto doneit;
+                }
+            }
             int after = nfas.size();
             nfas.push_back(nfa(production_name));
             int can_or = nfas.size();
@@ -2371,6 +2391,18 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
         }
         else if (s[pos] == "*") {
             ++pos;
+            if (s[pos]=="+"){
+                ++pos;
+                if (se == ne) {
+                    int f = nfas.size();
+                    nfas.push_back(nfa(production_name));
+                    nfas[se].match_nfa = se;
+                    nfas[se].no_match_nfa = f;
+                    nfa_start_ret = se;
+                    nfa_end_ret = f;
+                    goto doneit;
+                }
+            }
             int loop = nfas.size();
             nfas.push_back(nfa(production_name));
             int after = nfas.size();
@@ -2385,6 +2417,22 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
         }
         else if (s[pos] == "+") {
             ++pos;
+            if (s[pos] == "+") {
+                ++pos;
+                if (se == ne) {
+                    int d = nfas.size();
+                    nfa temp(nfas[se]);
+                    nfas.push_back(temp);
+                    int f = nfas.size();
+                    nfas.push_back(nfa(production_name));
+                    nfas[se].match_nfa = d;
+                    nfas[d].match_nfa = d;
+                    nfas[d].no_match_nfa = f;
+                    nfa_start_ret = se;
+                    nfa_end_ret = f;
+                    goto doneit;
+                }
+            }
             int loop = nfas.size();
             nfas.push_back(nfa(production_name));
             nfas[ne].match_nfa = loop;
@@ -2399,6 +2447,7 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
             nfa_start_ret = se;
             nfa_end_ret = ne;
         }
+doneit:
         while (s[pos] == " ") ++pos;
 
         if (s[pos] == "?" || s[pos] == "*" || s[pos] == "+") {
@@ -2709,19 +2758,19 @@ void init_parser()
             .prod("GE", ">=")
             .prod("NE", "!=")
             .prod("EQ", "==")
-            .prod("PREPROCESS_LINE", "#[^\\n]*")//{}{}{} not processed correctly
-            .prod("IDENT", "[_a-zA-Z][_0-9a-zA-Z]*")
+            .prod("PREPROCESS_LINE", "#[^\\n]*+")//{}{}{} not processed correctly
+            .prod("IDENT", "[_a-zA-Z][_0-9a-zA-Z]*+")
             .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
             .prod("COMMA", ",")
             .prod("COLON", "\\:")
             .prod("SEMICOLON", ";")
             .prod("STRING", "(L|u|U|u8)?R?\"(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\])*\"s?")
             .prod("CHAR", "(L|u|U|u8)?R?'(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^'\\\\])*'")
-            .prod("NUMBER", "-?(0|[1-9][0-9]*)(.[0-9]+)?([Ee][+\\-]?(0|[1-9][0-9]*))?(u|U)?(d|f|LL|L)?")
+            .prod("NUMBER", "-?(0|[1-9][0-9]*+)(.[0-9]++)?([Ee][+\\-]?(0|[1-9][0-9]*+))?(u|U)?(d|f|LL|L)?")
 
-        .skip("/\\*[^*]*(\\*[^/][^*]*)*\\*/")
-        .skip("//[^\\n\\r]*[\\r\\n]")
-        .skip(":space:+")
+        .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
+        .skip("//[^\\n\\r]*+[\\r\\n]")
+        .skip(":space:++")
         ;
 #else
         

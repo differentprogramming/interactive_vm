@@ -154,6 +154,18 @@ public:
     }
 
 };
+class debug_cat_set :public std::vector<utf8proc_category_t>
+{
+public:
+    int count(debug_cat_set &n) {
+        for (int j = n.size() - 1; j >= 0; --j) {
+            utf8proc_category_t o = n[j];
+            for (int i = (int)size() - 1; i >= 0; --i) if ((*this)[i] == o) return 1;
+        }
+        return 0;
+    }
+};
+
 
 #ifdef NOOOOO
 extern COutputWnd* output_window;
@@ -1650,17 +1662,33 @@ unicode_property unicode_properties[] =
 #include <unordered_map>
 #include <set>
 int lex_error_position;
+static debug_cat_set grapheme_cat_singleton;
+debug_cat_set& grapheme_cats(GraphemeString& o)
+{
+    grapheme_cat_singleton.clear();
+    for (int i = 0; i < o.codepoint_length(); ++i)
+    {
+        if (o.codepoint_at(i) != 0) {
+            grapheme_cat_singleton.push_back(utf8proc_category(o.codepoint_at(i)));
+        }
+    }
+    return grapheme_cat_singleton;
+}
+
+
 struct nfa
 {
     bool can_end;
     int end_priority;
-    std::vector<utf8proc_category_t> has_category;
-    std::vector<utf8proc_category_t> lacks_category;
+    debug_cat_set has_category;
+    debug_cat_set lacks_category;
     debug_set matches;
     debug_set lacks;
     int match_nfa; 
     int range_positive_count;
     int range_negative_count;
+    int cat_positive_count;
+    int cat_negative_count;
 
     int no_match_nfa;
     int or_nfa;
@@ -1670,7 +1698,7 @@ struct nfa
     nfa & nfa :: operator= (const nfa&) = default;
     nfa(const nfa&) = default;
 
-    nfa(GraphemeString& n) :name(n),match_nfa(-1),no_match_nfa(-1),or_nfa(-1), epsilon(true), can_end(false),end_priority(0), range_positive_count(0),range_negative_count(0){}
+    nfa(GraphemeString& n) :name(n),match_nfa(-1),no_match_nfa(-1),or_nfa(-1), epsilon(true), can_end(false),end_priority(0), range_positive_count(0),range_negative_count(0), cat_positive_count(0), cat_negative_count(0) {}
     void matches_ascii_range(char a, char b, bool negate = false) {
         epsilon = false;
         char buf[2];
@@ -1864,11 +1892,297 @@ struct nfa
 
         }
         else {
-            if (w == "\\" && (s[pos + 1] == "p"|| s[pos + 1] == "P")) {
-                //for now {}{}{}
-                return false;
+            GraphemeString unicode_spec = s.slice(pos, pos + 2);
+            if (unicode_spec == "\\p{" || unicode_spec == "\\P{") {
+#ifdef ITSACOMMENT
+                UTF8PROC_CATEGORY_CN = 0, /**< Other, not assigned */
+                    UTF8PROC_CATEGORY_LU = 1, /**< Letter, uppercase */
+                    UTF8PROC_CATEGORY_LL = 2, /**< Letter, lowercase */
+                    UTF8PROC_CATEGORY_LT = 3, /**< Letter, titlecase */
+                    UTF8PROC_CATEGORY_LM = 4, /**< Letter, modifier */
+                    UTF8PROC_CATEGORY_LO = 5, /**< Letter, other */
+                    UTF8PROC_CATEGORY_MN = 6, /**< Mark, nonspacing */
+                    UTF8PROC_CATEGORY_MC = 7, /**< Mark, spacing combining */
+                    UTF8PROC_CATEGORY_ME = 8, /**< Mark, enclosing */
+                    UTF8PROC_CATEGORY_ND = 9, /**< Number, decimal digit */
+                    UTF8PROC_CATEGORY_NL = 10, /**< Number, letter */
+                    UTF8PROC_CATEGORY_NO = 11, /**< Number, other */
+                    UTF8PROC_CATEGORY_PC = 12, /**< Punctuation, connector */
+                    UTF8PROC_CATEGORY_PD = 13, /**< Punctuation, dash */
+                    UTF8PROC_CATEGORY_PS = 14, /**< Punctuation, open */
+                    UTF8PROC_CATEGORY_PE = 15, /**< Punctuation, close */
+                    UTF8PROC_CATEGORY_PI = 16, /**< Punctuation, initial quote */
+                    UTF8PROC_CATEGORY_PF = 17, /**< Punctuation, final quote */
+                    UTF8PROC_CATEGORY_PO = 18, /**< Punctuation, other */
+                    UTF8PROC_CATEGORY_SM = 19, /**< Symbol, math */
+                    UTF8PROC_CATEGORY_SC = 20, /**< Symbol, currency */
+                    UTF8PROC_CATEGORY_SK = 21, /**< Symbol, modifier */
+                    UTF8PROC_CATEGORY_SO = 22, /**< Symbol, other */
+                    UTF8PROC_CATEGORY_ZS = 23, /**< Separator, space */
+                    UTF8PROC_CATEGORY_ZL = 24, /**< Separator, line */
+                    UTF8PROC_CATEGORY_ZP = 25, /**< Separator, paragraph */
+                    UTF8PROC_CATEGORY_CC = 26, /**< Other, control */
+                    UTF8PROC_CATEGORY_CF = 27, /**< Other, format */
+                    UTF8PROC_CATEGORY_CS = 28, /**< Other, surrogate */
+                    UTF8PROC_CATEGORY_CO = 29, /**< Other, private use */
+            } utf8proc_category_t;
+#endif
+            GraphemeString us_rest = s.slice(pos + 3, pos + 5); 
+            std::vector<utf8proc_category_t> cat;
+
+            if (us_rest == "CN}" || us_rest == "cn}") {
+                cat.push_back(UTF8PROC_CATEGORY_CN);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
             }
-            else {
+            else if (us_rest == "LU}" || us_rest == "lu}" || s.slice(pos, pos+10) == "\\p{:upper:}"){
+                cat.push_back(UTF8PROC_CATEGORY_LU);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "LL}" || us_rest == "ll}" || s.slice(pos, pos + 10) == "\\p{:lower:}") {
+                cat.push_back(UTF8PROC_CATEGORY_LL);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "LT}" || us_rest == "lt}") {
+                cat.push_back(UTF8PROC_CATEGORY_LT);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "LM}" || us_rest == "lm}") {
+                cat.push_back(UTF8PROC_CATEGORY_LM);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (s.slice(pos, pos + 10) == "\\p{:graph:}") {
+                cat.push_back(UTF8PROC_CATEGORY_LU);
+                cat.push_back(UTF8PROC_CATEGORY_LL);
+                cat.push_back(UTF8PROC_CATEGORY_LT);
+                cat.push_back(UTF8PROC_CATEGORY_LM);
+                cat.push_back(UTF8PROC_CATEGORY_LO);
+                cat.push_back(UTF8PROC_CATEGORY_ME);
+                cat.push_back(UTF8PROC_CATEGORY_ND);
+                cat.push_back(UTF8PROC_CATEGORY_NL);
+                cat.push_back(UTF8PROC_CATEGORY_NO);
+                cat.push_back(UTF8PROC_CATEGORY_PC);
+                cat.push_back(UTF8PROC_CATEGORY_PD);
+                cat.push_back(UTF8PROC_CATEGORY_PS);
+                cat.push_back(UTF8PROC_CATEGORY_PE);
+                cat.push_back(UTF8PROC_CATEGORY_PI);
+                cat.push_back(UTF8PROC_CATEGORY_PF);
+                cat.push_back(UTF8PROC_CATEGORY_PO);
+                cat.push_back(UTF8PROC_CATEGORY_SM);
+                cat.push_back(UTF8PROC_CATEGORY_SC);
+                cat.push_back(UTF8PROC_CATEGORY_SK);
+                cat.push_back(UTF8PROC_CATEGORY_SO);
+                if (negate) cat_negative_count+=20;
+                else cat_positive_count+=20;
+            }
+            else if (s.slice(pos, pos + 9) == "\\p{:word:}") {
+                cat.push_back(UTF8PROC_CATEGORY_LU);
+                cat.push_back(UTF8PROC_CATEGORY_LL);
+                cat.push_back(UTF8PROC_CATEGORY_LT);
+                cat.push_back(UTF8PROC_CATEGORY_LM);
+                cat.push_back(UTF8PROC_CATEGORY_LO);
+                if (negate) cat_negative_count += 5;
+                else cat_positive_count += 5;
+            }
+            else if (s.slice(pos, pos + 10) == "\\p{:alnum:}") {
+                cat.push_back(UTF8PROC_CATEGORY_LU);
+                cat.push_back(UTF8PROC_CATEGORY_LL);
+                cat.push_back(UTF8PROC_CATEGORY_LT);
+                cat.push_back(UTF8PROC_CATEGORY_LM);
+                cat.push_back(UTF8PROC_CATEGORY_LO);
+                cat.push_back(UTF8PROC_CATEGORY_ND);
+                cat.push_back(UTF8PROC_CATEGORY_NL);
+                cat.push_back(UTF8PROC_CATEGORY_NO);
+                if (negate) cat_negative_count += 8;
+                else cat_positive_count += 8;
+            }
+            else if (s.slice(pos, pos + 10) == "\\p{:digit:}") {
+                cat.push_back(UTF8PROC_CATEGORY_ND);
+                cat.push_back(UTF8PROC_CATEGORY_NL);
+                cat.push_back(UTF8PROC_CATEGORY_NO);
+                if (negate) cat_negative_count += 3;
+                else cat_positive_count += 3;
+            }
+            else if (s.slice(pos, pos + 10) == "\\p{:space:}") {
+                cat.push_back(UTF8PROC_CATEGORY_ZS);
+                cat.push_back(UTF8PROC_CATEGORY_ZL);
+                cat.push_back(UTF8PROC_CATEGORY_ZP);
+                if (negate) cat_negative_count += 3;
+                else cat_positive_count += 3;
+                matches_char(' ', negate);
+                matches_char('\t', negate);
+                matches_char('\n', negate);
+                matches_char('\r', negate);
+
+                matches_char(0x0b, negate);
+                matches_char(0x20, negate);
+            }
+            else if (s.slice(pos, pos + 10) == "\\p{:punct:}") {
+
+                cat.push_back(UTF8PROC_CATEGORY_PC);
+                cat.push_back(UTF8PROC_CATEGORY_PD);
+                cat.push_back(UTF8PROC_CATEGORY_PS);
+                cat.push_back(UTF8PROC_CATEGORY_PE);
+                cat.push_back(UTF8PROC_CATEGORY_PI);
+                cat.push_back(UTF8PROC_CATEGORY_PF);
+                cat.push_back(UTF8PROC_CATEGORY_PO);
+                cat.push_back(UTF8PROC_CATEGORY_SM);
+                cat.push_back(UTF8PROC_CATEGORY_SC);
+                cat.push_back(UTF8PROC_CATEGORY_SK);
+                cat.push_back(UTF8PROC_CATEGORY_SO);
+                if (negate) cat_negative_count += 11;
+                else cat_positive_count += 11;
+                matches_ascii_range('!', '\\', negate);
+                matches_ascii_range(':', '@', negate);
+                matches_ascii_range('[', '`', negate);
+                matches_ascii_range('{', '~', negate);
+
+            }
+            else if (us_rest == "LO}" || us_rest == "lo}") {
+                cat.push_back(UTF8PROC_CATEGORY_LO);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "MN}" || us_rest == "mn}") {
+                cat.push_back(UTF8PROC_CATEGORY_MN);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "MC}" || us_rest == "mc}") {
+                cat.push_back(UTF8PROC_CATEGORY_MC);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "ME}" || us_rest == "me}") {
+                cat.push_back(UTF8PROC_CATEGORY_ME);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "ND}" || us_rest == "nd}") {
+                cat.push_back(UTF8PROC_CATEGORY_ND);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "NL}" || us_rest == "nl}") {
+                cat.push_back(UTF8PROC_CATEGORY_NL);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "NO}" || us_rest == "no}") {
+                cat.push_back(UTF8PROC_CATEGORY_NO);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PC}" || us_rest == "pc}") {
+                cat.push_back(UTF8PROC_CATEGORY_PC);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PD}" || us_rest == "pd}") {
+                cat.push_back(UTF8PROC_CATEGORY_PD);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PS}" || us_rest == "ps}") {
+                cat.push_back(UTF8PROC_CATEGORY_PS);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PE}" || us_rest == "pe}") {
+                cat.push_back(UTF8PROC_CATEGORY_PE);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PI}" || us_rest == "pi}") {
+                cat.push_back(UTF8PROC_CATEGORY_PI);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PF}" || us_rest == "pf}") {
+                cat.push_back(UTF8PROC_CATEGORY_PF);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "PO}" || us_rest == "po}") {
+                cat.push_back(UTF8PROC_CATEGORY_PO);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "SM}" || us_rest == "sm}") {
+                cat.push_back(UTF8PROC_CATEGORY_SM);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "SC}" || us_rest == "sc}") {
+                cat.push_back(UTF8PROC_CATEGORY_SC);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "SK}" || us_rest == "sk}") {
+                cat.push_back(UTF8PROC_CATEGORY_SK);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "SO}" || us_rest == "so}") {
+                cat.push_back(UTF8PROC_CATEGORY_SO);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "ZS}" || us_rest == "zs}") {
+                cat.push_back(UTF8PROC_CATEGORY_ZS);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "ZL}" || us_rest == "zl}") {
+                cat.push_back(UTF8PROC_CATEGORY_ZL);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "ZP}" || us_rest == "zp}") {
+                cat.push_back(UTF8PROC_CATEGORY_ZP);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "CC}" || us_rest == "cc}") {
+                cat.push_back(UTF8PROC_CATEGORY_CC);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "CF}" || us_rest == "cf}") {
+                cat.push_back(UTF8PROC_CATEGORY_CF);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "CS}" || us_rest == "cs}") {
+                cat.push_back(UTF8PROC_CATEGORY_CS);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else if (us_rest == "CO}" || us_rest == "CO}") {
+                cat.push_back(UTF8PROC_CATEGORY_CO);
+                if (negate) ++cat_negative_count;
+                else ++cat_positive_count;
+            }
+            else return false;
+            while (cat.size() > 0) {
+                if (negate) {
+                    lacks_category.push_back(cat.back());
+                }
+                else {
+                    has_category.push_back(cat.back());
+                }
+                cat.pop_back();
+            }
+            epsilon = false;
+            pos += 3;
+            while (s[pos] != "}")++pos;
+            ++pos;
+            return true;
+        } else {
                 auto first = read_char(s,pos, production_name);
                 int32_t first_codepoint;
                 first.fill_codepoints(&first_codepoint, false);
@@ -1977,12 +2291,13 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
         report2("forward on epsilon from %d to %d\n", current, nfas[current].match_nfa);
         return next_nfa(next_char, pos, nfas[current].match_nfa, last_endpoint, splits); 
     }
+
     else {
-        if (((nfas[current].range_positive_count == 0 && nfas[current].range_negative_count != 0) || 
-            //(next_char=="o" || 
-                nfas[current].matches.count(next_char) != 0
-                //)//{}{}{} test
-            ) && 0 == nfas[current].lacks.count(next_char)) {
+        auto cats = grapheme_cats(next_char);
+        if ((((nfas[current].range_positive_count == 0 && nfas[current].range_negative_count != 0) || 
+                nfas[current].matches.count(next_char) != 0)
+        || ((nfas[current].cat_positive_count == 0 && nfas[current].cat_negative_count != 0) ||
+            nfas[current].has_category.count(cats) != 0)) && (0 == nfas[current].lacks_category.count(cats) && 0 == nfas[current].lacks.count(next_char))){
             report3("forward on match from %d to %d %s\n", current, nfas[current].match_nfa,(nfas[current].matches.count(next_char) != 0?"on positive match":""));
             return nfas[current].match_nfa;
         }
@@ -1999,7 +2314,7 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos, int &st
     for (;;) {
         last_found_nfa last(pos);
         int cur_pos = pos;
-
+        if (source[pos] == "")return false;
         std::vector<int> concurrent = nfa_start_states;
         while (concurrent.size() > 0) {
             report2("***about to start loop over %d elements for `%s`\n", (int)concurrent.size(),source[cur_pos].str());
@@ -2020,6 +2335,7 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos, int &st
                 report3("SKIPPING %s from %d to %d\n", nfas[last.found].name.str(), pos, last.pos);
                 pos = last.pos;
                 startpos = pos;
+                if (source[pos] == "")return false;
                 continue;//skip
             }
             found = &nfas[last.found].name;
@@ -2730,6 +3046,7 @@ void init_parser()
             .prod("AND", "&&")
             .prod("OR", "\\|\\|")
             .prod("PLUS", "\\+")
+            .prod("WIDEPLUS", u8"＋")
             .prod("MINUS", "\\-")
             .prod("TILDE", "~")
             .prod("MUL", "\\*")
@@ -2759,18 +3076,18 @@ void init_parser()
             .prod("NE", "!=")
             .prod("EQ", "==")
             .prod("PREPROCESS_LINE", "#[^\\n]*+")//{}{}{} not processed correctly
-            .prod("IDENT", "[_a-zA-Z][_0-9a-zA-Z]*+")
+            .prod("IDENT", "[\\p{:word:}_][_\\p{:alnum:}]*+")
             .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
             .prod("COMMA", ",")
             .prod("COLON", "\\:")
             .prod("SEMICOLON", ";")
             .prod("STRING", "(L|u|U|u8)?R?\"(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\])*\"s?")
             .prod("CHAR", "(L|u|U|u8)?R?'(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^'\\\\])*'")
-            .prod("NUMBER", "-?(0|[1-9][0-9]*+)(.[0-9]++)?([Ee][+\\-]?(0|[1-9][0-9]*+))?(u|U)?(d|f|LL|L)?")
+            .prod("NUMBER", "-?([\\p{:digit:}]*+)(.[\\p{:digit:}]++)?([Ee][+\\-]?([\\p{:digit:}]*+))?(u|U)?(d|f|LL|L)?")
 
         .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
         .skip("//[^\\n\\r]*+[\\r\\n]")
-        .skip(":space:++")
+        .skip("[\\p{:space:}]++")
         ;
 #else
         

@@ -142,10 +142,19 @@ namespace llvm {
 #include <map>
 
 #include "grapheme.h"
+#include <unordered_map>
+#include <set>
+#include <unordered_set>
+#define DEBUGSETS
+#ifdef DEBUGSETS
 class debug_set {
     std::vector<GraphemeString> collection;
 public:
-    void insert(GraphemeString& o) { collection.push_back(o); }
+    GraphemeString& operator[](int i) { return collection[i];  }
+    void insert(GraphemeString& o) { 
+        for (int i = (int)size() - 1; i >= 0; --i) if (collection[i] == o) return;
+        collection.push_back(o); 
+    }
     size_t size() const { return collection.size(); }
     int count(GraphemeString& o)
     {
@@ -154,18 +163,41 @@ public:
     }
 
 };
-class debug_cat_set :public std::vector<utf8proc_category_t>
+class debug_cat_set 
 {
+    std::vector<utf8proc_category_t> collection;
 public:
+    utf8proc_category_t& operator[](int i) { return collection[i]; }
+    void insert(utf8proc_category_t o) {
+        for (int i = (int)size() - 1; i >= 0; --i) if (collection[i] == o) return;
+        collection.push_back(o); 
+    }
+    void clear() { collection.clear();  }
+    size_t size() const { return collection.size(); }
     int count(debug_cat_set &n) {
         for (int j = n.size() - 1; j >= 0; --j) {
-            utf8proc_category_t o = n[j];
-            for (int i = (int)size() - 1; i >= 0; --i) if ((*this)[i] == o) return 1;
+            utf8proc_category_t o = n.collection[j];
+            for (int i = (int)size() - 1; i >= 0; --i) if (collection[i] == o) return 1;
         }
         return 0;
     }
 };
+int cat_set_count(debug_cat_set& s, debug_cat_set& n)
+{
+    return s.count(n);
+}
+#else
+#define debug_set std::unordered_set<GraphemeString>
+#define debug_cat_set std::unordered_set<utf8proc_category_t>
+int cat_set_count(debug_cat_set& s, debug_cat_set& n)
+{
+    for (auto a : n) {
+        if (s.count(a) != 0) return 1;
+    }
+    return 0;
+}
 
+#endif
 
 #ifdef NOOOOO
 extern COutputWnd* output_window;
@@ -1659,8 +1691,7 @@ unicode_property unicode_properties[] =
   
 };
 
-#include <unordered_map>
-#include <set>
+
 int lex_error_position;
 static debug_cat_set grapheme_cat_singleton;
 debug_cat_set& grapheme_cats(GraphemeString& o)
@@ -1669,7 +1700,7 @@ debug_cat_set& grapheme_cats(GraphemeString& o)
     for (int i = 0; i < o.codepoint_length(); ++i)
     {
         if (o.codepoint_at(i) != 0) {
-            grapheme_cat_singleton.push_back(utf8proc_category(o.codepoint_at(i)));
+            grapheme_cat_singleton.insert(utf8proc_category(o.codepoint_at(i)));
         }
     }
     return grapheme_cat_singleton;
@@ -2170,10 +2201,10 @@ struct nfa
             else return false;
             while (cat.size() > 0) {
                 if (negate) {
-                    lacks_category.push_back(cat.back());
+                    lacks_category.insert(cat.back());
                 }
                 else {
-                    has_category.push_back(cat.back());
+                    has_category.insert(cat.back());
                 }
                 cat.pop_back();
             }
@@ -2297,7 +2328,7 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
         if ((((nfas[current].range_positive_count == 0 && nfas[current].range_negative_count != 0) || 
                 nfas[current].matches.count(next_char) != 0)
         || ((nfas[current].cat_positive_count == 0 && nfas[current].cat_negative_count != 0) ||
-            nfas[current].has_category.count(cats) != 0)) && (0 == nfas[current].lacks_category.count(cats) && 0 == nfas[current].lacks.count(next_char))){
+            cat_set_count(nfas[current].has_category,cats) != 0)) && (0 == cat_set_count(nfas[current].lacks_category,cats) && 0 == nfas[current].lacks.count(next_char))){
             report3("forward on match from %d to %d %s\n", current, nfas[current].match_nfa,(nfas[current].matches.count(next_char) != 0?"on positive match":""));
             return nfas[current].match_nfa;
         }

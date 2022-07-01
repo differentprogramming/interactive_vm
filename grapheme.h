@@ -332,7 +332,7 @@ public:
 			if (o.size() > 0) return true;
 			return false;
 		}
-		for (int i = 0; i < min_size; ++i) {
+		for (int i = 0; i < min_size-1; ++i) {
 			int32_t left = source->codepoint_buffer[i + codepoint_start_slice_index()];
 			int32_t right = o.source->codepoint_buffer[i + o.codepoint_start_slice_index()];
 			if (left != right) {

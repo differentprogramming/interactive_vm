@@ -156,6 +156,10 @@ public:
         collection.push_back(o); 
     }
     size_t size() const { return collection.size(); }
+    auto cbegin() { return collection.cbegin(); }
+    auto cend() {
+        return collection.cend();
+    }
     int count(GraphemeString& o)
     {
         for (int i = (int)collection.size() - 1; i >= 0; --i) if (collection[i] == o) return 1;
@@ -171,6 +175,10 @@ public:
     void insert(utf8proc_category_t o) {
         for (int i = (int)size() - 1; i >= 0; --i) if (collection[i] == o) return;
         collection.push_back(o); 
+    }
+    auto cbegin() { return collection.cbegin(); }
+    auto cend() {
+        return collection.cend();
     }
     void clear() { collection.clear();  }
     size_t size() const { return collection.size(); }

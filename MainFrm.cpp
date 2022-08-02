@@ -45,6 +45,7 @@ CMainFrame::CMainFrame()
 
 CMainFrame::~CMainFrame()
 {
+
 }
 
 COutputWnd *output_window = nullptr;

@@ -1,6 +1,8 @@
 #include <iostream>
 #include "grapheme.h"
 
+
+
 char GSTemp1[GSTEMPLEN];
 char GSTemp2[GSTEMPLEN];
 char GSTemp3[GSTEMPLEN];
@@ -24,7 +26,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(const utf8proc_uint8_t *str
 
 */
 
-GraphemeString_letter GraphemeString_letter::Null((uint8_t*)"",Singleton);
+//GraphemeString_letter GraphemeString_letter::Null((uint8_t*)"",Singleton);
 
 
 
@@ -99,7 +101,6 @@ LPSTR UnicodeToUTF8(LPCTSTR s)
 		NULL,
 		NULL
 	);
-	
 	return mbuffer;
 }
 
@@ -126,7 +127,6 @@ void GraphemeString_letter::build(const std::vector<GraphemeString>& o)
 		offset += g.byte_length();
 	}
 	load(store_normalized);
-	
 }
 void GraphemeString_letter::load(const GraphemeString& o1, const GraphemeString& o2)
 {
@@ -149,7 +149,7 @@ void GraphemeString_letter::load(const GraphemeString& o)
 void GraphemeString_letter::load(const uint8_t* source)
 {
 	uint8_t* store_normalized;
-	
+
 	int utf8_size = utf8proc_map(source, 0, &store_normalized, (utf8proc_option_t)(UTF8PROC_NULLTERM | UTF8PROC_STABLE | UTF8PROC_COMPOSE) //| UTF8PROC_NLF2LF
 	);
 	if (utf8_size < 0) {
@@ -193,10 +193,10 @@ void GraphemeString_letter::load(const uint8_t* source)
 			break;
 		}
 		if (codepoint_index > 0 && utf8proc_grapheme_break_stateful(prev_codepoint, codepoint_buffer.back(), &grapheme_state)) {
-			grapheme_to_codepoint_index.push_back(codepoint_index);			
+			grapheme_to_codepoint_index.push_back(codepoint_index);
 		}
 		prev_codepoint = codepoint_buffer.back();
 		codepoint_buffer.push_back(0);
 	}
-	
+	log_size(sizeof(this) + 4 * (codepoint_buffer.size() + codepoint_to_utf8_index.size() + grapheme_to_codepoint_index.size()) + utf8_buffer_size);
 }

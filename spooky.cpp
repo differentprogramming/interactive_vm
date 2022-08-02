@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "spooky.h"
 
 // A C version of Bob Jenkins' spooky hash
 // Spooky Hash

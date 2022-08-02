@@ -1,7 +1,22 @@
 #ifndef GRAPHEME_STRING_H
 #define GRAPHEME_STRING_H
 
-#include "stdafx.h"
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN            // Exclude rarely-used stuff from Windows headers
+#endif
+#include <windows.h>
+#include <vector>
+#include "CollectableHash.h"
+
+//#include <boost/intrusive_ptr.hpp>
+//#include <boost/smart_ptr/intrusive_ref_counter.hpp>
+
+#include <iostream>
+
+#define UTF8PROC_STATIC
+//note it's getting stddef and others from utf8proc.h
+#include "utf8proc/utf8proc.h"
+#include "spooky.h"
 
 #define GSTEMPLEN 200
 extern char GSTemp1[GSTEMPLEN];
@@ -29,7 +44,7 @@ enum SingletonEnum {
 	Singleton
 };
 
-class GraphemeString_letter : public boost::intrusive_ref_counter<GraphemeString_letter, boost::thread_unsafe_counter>
+class GraphemeString_letter : public Collectable
 {
 
 public:
@@ -39,7 +54,7 @@ public:
 	std::vector<int> codepoint_to_utf8_index;
 	std::vector<int> grapheme_to_codepoint_index;
 
-static GraphemeString_letter Null;
+//static GraphemeString_letter Null;
 
 	void load(const GraphemeString&);
 	void load(const GraphemeString&, const GraphemeString&);
@@ -49,7 +64,7 @@ static GraphemeString_letter Null;
 	GraphemeString_letter(const std::vector<GraphemeString>& o) { build(o); };
 
 	GraphemeString_letter(const uint8_t* source) { load(source); };
-	GraphemeString_letter(const uint8_t* source, SingletonEnum) { intrusive_ptr_add_ref(this); load(source); };
+	//GraphemeString_letter(const uint8_t* source, SingletonEnum) { intrusive_ptr_add_ref(this); load(source); };
 	GraphemeString_letter(const int32_t* source)
 	{
 		int len = fill_utf8_from_codepoints(source);
@@ -68,16 +83,21 @@ static GraphemeString_letter Null;
 
 	};
 
+	InstancePtrBase* index_into_instance_vars(int num) { return nullptr; }
+	int total_instance_vars() const { return 0; }
+
+
 	GraphemeString_letter(const GraphemeString& source) { load(source); };
 	GraphemeString_letter(const GraphemeString& src1, const GraphemeString& src2) { load(src1, src2); };
 };
+
 
 class GraphemeIterator;
 class RGraphemeIterator;
 class GraphemeStringBuilder;
 LPSTR UnicodeToUTF8(LPCTSTR s);
 class GraphemeString {
-	boost::intrusive_ptr< GraphemeString_letter> source;
+	RootPtr< const GraphemeString_letter> source;
 	int g_start;
 	int g_end;
 	friend class GraphemeIterator;
@@ -88,9 +108,9 @@ class GraphemeString {
 	void fill_hash() {
 		hash_value1 = 0x1E09C1AE8B8BD53EL;
 		hash_value2 = 0x98DDC5A77F2B363AL;
-		spooky_hash128(&*source->utf8_buffer + byte_start_slice_index(), byte_length(), &hash_value1,&hash_value2);
+		spooky_hash128(&*source->utf8_buffer + byte_start_slice_index(), byte_length(), &hash_value1, &hash_value2);
 	}
-	GraphemeString(boost::intrusive_ptr< GraphemeString_letter> s, int st, int ed) :source(s), g_start(st), g_end(ed) { 
+	GraphemeString(const RootPtr<const GraphemeString_letter> &s, int st, int ed) :source(s), g_start(st), g_end(ed) { 
 		fill_hash(); 
 	}
 
@@ -163,7 +183,7 @@ public:
 
 	GraphemeString operator +(const GraphemeString& o) const
 	{
-		return GraphemeString(new GraphemeString_letter(*this, o), 0, size() + o.size() - 1); // {} {}{}?
+		return GraphemeString(RootPtr<const GraphemeString_letter>(new GraphemeString_letter(*this, o)), 0, size() + o.size() - 1); // {} {}{}?
 	}
 
 	static uint8_t nullbyte;
@@ -178,6 +198,7 @@ public:
 		if (i >= codepoint_length() || i < 0) return nullcodepoint;
 		return source->codepoint_buffer[i + codepoint_start_slice_index()];
 	}
+
 	const int32_t& grapheme_num_codepoints(int i) const
 	{
 		if (i >= grapheme_length() || i < 0) return 0;
@@ -213,7 +234,7 @@ public:
 	GraphemeString operator[](int i) const
 	{
 		if (i < 0 || i >= grapheme_length()-1) {
-			return GraphemeString(&GraphemeString_letter::Null, 0, 1);
+			return GraphemeString(new GraphemeString_letter(""), 0, 1);
 		}
 		return GraphemeString(source, i + g_start, i + g_start + 2);
 	}
@@ -233,13 +254,13 @@ public:
 	{
 		fill_hash();
 	}
-	GraphemeString(const char* s,SingletonEnum) :source(new GraphemeString_letter((const uint8_t*)s,Singleton)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 1)
-	{
-		fill_hash();
-	}
+//	GraphemeString(const char* s,SingletonEnum) :source(new GraphemeString_letter((const uint8_t*)s,Singleton)), g_start(0), g_end(source->grapheme_to_codepoint_index.size() - 1)
+//	{
+//		fill_hash();
+//	}
 
-	GraphemeString(const GraphemeString& o) :source(o.source), g_start(o.g_start), g_end(o.g_end) { fill_hash(); }
-	GraphemeString(GraphemeString&& o) :source(o.source), g_start(o.g_start), g_end(o.g_end) { fill_hash(); }
+	GraphemeString(const GraphemeString& o) :source(o.source), g_start(o.g_start), g_end(o.g_end), hash_value1(o.hash_value1), hash_value2(o.hash_value2) {  }
+	GraphemeString(GraphemeString&& o) = default;
 	//for windows!
 	GraphemeString(const wchar_t* s) {
 		std::unique_ptr<const uint8_t> ts((const uint8_t*)UnicodeToUTF8(s));
@@ -349,18 +370,17 @@ public:
 
 };
 
-//for std::unordered_map ??and others?
-namespace std
+template<>
+struct std::hash<GraphemeString>
 {
-	template <>
-	struct hash<GraphemeString>
+	std::size_t operator()(GraphemeString const& s) const noexcept
 	{
-		size_t operator()(const GraphemeString& k) const
-		{
-			return (size_t)k.hash1();
-		}
-	};
-}
+		return (size_t)s.hash1();
+	}
+};
+
+//for std::unordered_map ??and others?
+
 
 inline std::ostream& operator<<(std::ostream& os, const GraphemeString& o) {
 	std::unique_ptr<uint8_t[]> buf(new uint8_t[o.byte_length() + 1]);

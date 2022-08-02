@@ -55,6 +55,9 @@ CInteractiveApp theApp;
 
 BOOL CInteractiveApp::InitInstance()
 {
+	GC::init();
+	GC::init_thread();
+	GC::thread_leave_mutation();
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
 	// visual styles.  Otherwise, any window creation will fail.
@@ -135,6 +138,9 @@ BOOL CInteractiveApp::InitInstance()
 int CInteractiveApp::ExitInstance()
 {
 	//TODO: handle additional resources you may have added
+
+	GC::exit_thread();
+	GC::exit_collect_thread();
 	return CWinAppEx::ExitInstance();
 }
 

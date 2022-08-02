@@ -10,9 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "stdafx.h"
+
 #ifndef LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
 #define LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
-
+#ifdef NO_NO_NO
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
@@ -25,6 +27,7 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
+#endif
 #include <memory>
 
 #define report(f) _RPTF0(_CRT_WARN, f)
@@ -35,7 +38,7 @@
 #define report5(f,a,b,c,d,e) _RPTF5(_CRT_WARN, f,a,b,c,d,e)
 #define report6(f,a,b,c,d,e,g) _RPTF6(_CRT_WARN, f,a,b,c,d,e,g)
 
-
+#ifdef NO_NO_NO
 namespace llvm {
     namespace orc {
 
@@ -109,13 +112,13 @@ namespace llvm {
 
     } // end namespace orc
 } // end namespace llvm
-
+#endif
 #endif // LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
 
 #include <cassert>
 #include <utility>
 
-
+#ifdef NO_NO_NO
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
@@ -134,6 +137,7 @@ namespace llvm {
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
+#endif
 #include <algorithm>
 #include <cassert>
 #include <cctype>
@@ -145,7 +149,7 @@ namespace llvm {
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-#define DEBUGSETS
+//#define DEBUGSETS
 #ifdef DEBUGSETS
 class debug_set {
     std::vector<GraphemeString> collection;
@@ -208,1365 +212,7 @@ int cat_set_count(debug_cat_set& s, debug_cat_set& n)
 #endif
 
 #ifdef NOOOOO
-extern COutputWnd* output_window;
-extern CMFCStatusBar* status_bar;
 
-std::string errbuf;
-//std::ostringstream *myout;
-llvm::raw_string_ostream *myerr;
-
-#ifdef _WIN32
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT
-#endif
-
-extern "C" DLLEXPORT double putchard(double x) {
-    *myerr << (char)round(x);
-    return 0;
-}
-
-/// printd - printf that takes a double prints it as "%f\n", returning 0.
-extern "C" DLLEXPORT double printd(double X) {
-    char buf[30];
-    sprintf_s(buf, sizeof(buf)-1, "%f\n", X);
-    *myerr << buf;
-    return 0;
-}
-
-char buffer[10000];
-
-using namespace llvm;
-using namespace llvm::orc;
-//My Lexer
-
-const char* Keywords[] = { "array" //0
-,"and"
-,"as"
-,"ast"
-,"atom"
-,"become"
-,"big"
-,"biop"
-,"boxed"
-,"break"
-,"byte"     //10
-,"cast"
-,"call"
-,"case"
-,"class"
-,"cut"
-,"declare"
-,"delete"
-,"default"
-,"do"
-,"continue" //20
-,"constant"
-,"continuation"
-,"ctree"
-,"else"
-,"elseif"
-,"endfunction"
-,"endgenerator"
-,"endswitch"
-,"endif"
-,"endwhile" //30
-,"function"
-,"generator"
-,"if"
-,"index"
-,"integer"
-,"interface"
-,"list"
-,"logical"
-,"match"
-,"maybe"    //40
-,"mod"
-,"new"
-,"nil"
-,"no"
-,"not"
-,"object"
-,"of"
-,"or"
-,"one"
-,"pointer"  //50
-,"post"
-,"pre"
-,"real"
-,"record"
-,"returning"
-,"send"
-,"sizeof"
-,"string"
-,"super"
-,"switch"   //60
-,"table"
-,"then"
-,"to"
-,"unify"
-,"until"
-,"value"
-,"var"
-,"where"
-,"whether"
-,"while"    //70
-,"bxor"
-,"yes"
-,"-"
-,"*"
-,"&"
-,"!"
-,"~"
-,"++"
-,"--"
-,"="        //80
-,"+="
-,"-="
-, "*="
-,"/="
-,"mod="
-,"<<="
-,">>="
-,"band="
-,"bor="
-,"bxor="    //90
-,"^"
-,"<="
-,">="
-,"<"
-,">"
-,"=="
-,"not="
-,"<=>"
-,".."
-,"."    //100
-,"|"
-,">>"
-,"<<"
-,"+"
-,"\\"
-,"/"
-,"?="
-,"?"
-,"#"
-,"#|" //110
-,"`"    
-,","
-,"::"
-,"("
-,")"
-,"["
-,"]"
-,"{"
-,"}"
-,"'"//120
-,":"    
-,";"
-,nullptr
-};
-
-SolidAsciiTokenizer Tokenizer(false, Keywords);
-
-//===----------------------------------------------------------------------===//
-// Lexer
-//===----------------------------------------------------------------------===//
-#ifdef OH_OH_NO
-// The lexer returns tokens [0-255] if it is an unknown character, otherwise one
-// of these for known things.
-enum Token {
-    tok_eof = -1,
-
-    // commands
-    tok_def = -2,
-    tok_extern = -3,
-
-  // primary
-  tok_identifier = -4,
-  tok_number = -5,
-
-  // control
-  tok_if = -6,
-  tok_then = -7,
-  tok_else = -8,
-  tok_for = -9,
-  tok_in = -10,
-
-  // operators
-  tok_binary = -11,
-  tok_unary = -12
-};
-
-static std::string IdentifierStr; // Filled in if tok_identifier
-static double NumVal;             // Filled in if tok_number
-
-/// gettok - Return the next token from standard input.
-static int gettok() {
-    static int LastChar = ' ';
-
-    // Skip any whitespace.
-    while (isspace(LastChar))
-        LastChar = getchar();
-
-    if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*
-        IdentifierStr = LastChar;
-        while (isalnum((LastChar = getchar())))
-            IdentifierStr += LastChar;
-
-    if (IdentifierStr == "def")
-      return tok_def;
-    if (IdentifierStr == "extern")
-      return tok_extern;
-    if (IdentifierStr == "if")
-      return tok_if;
-    if (IdentifierStr == "then")
-      return tok_then;
-    if (IdentifierStr == "else")
-      return tok_else;
-    if (IdentifierStr == "for")
-      return tok_for;
-    if (IdentifierStr == "in")
-      return tok_in;
-    if (IdentifierStr == "binary")
-      return tok_binary;
-    if (IdentifierStr == "unary")
-      return tok_unary;
-    return tok_identifier;
-  }
-
-    if (isdigit(LastChar) || LastChar == '.') { // Number: [0-9.]+
-        std::string NumStr;
-        do {
-            NumStr += LastChar;
-            LastChar = getchar();
-        } while (isdigit(LastChar) || LastChar == '.');
-
-        NumVal = strtod(NumStr.c_str(), nullptr);
-        return tok_number;
-    }
-
-    if (LastChar == '#') {
-        // Comment until end of line.
-        do
-            LastChar = getchar();
-        while (LastChar != EOF && LastChar != '\n' && LastChar != '\r');
-
-        if (LastChar != EOF)
-            return gettok();
-    }
-
-    // Check for end of file.  Don't eat the EOF.
-    if (LastChar == EOF)
-        return tok_eof;
-
-    // Otherwise, just return the character as its ascii value.
-    int ThisChar = LastChar;
-    LastChar = getchar();
-    return ThisChar;
-}
-#endif
-//===----------------------------------------------------------------------===//
-// Abstract Syntax Tree (aka Parse Tree)
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-    /// ExprAST - Base class for all expression nodes.
-    class ExprAST {
-    public:
-        virtual ~ExprAST() = default;
-
-        virtual Value* codegen() = 0;
-    };
-
-    /// NumberExprAST - Expression class for numeric literals like "1.0".
-    class NumberExprAST : public ExprAST {
-        double Val;
-
-    public:
-        NumberExprAST(double Val) : Val(Val) {}
-
-        Value* codegen() override;
-    };
-
-    /// VariableExprAST - Expression class for referencing a variable, like "a".
-    class VariableExprAST : public ExprAST {
-        std::string Name;
-
-    public:
-        VariableExprAST(const std::string& Name) : Name(Name) {}
-
-        Value* codegen() override;
-    };
-
-/// UnaryExprAST - Expression class for a unary operator.
-class UnaryExprAST : public ExprAST {
-    TOKENS Opcode;
-  std::unique_ptr<ExprAST> Operand;
-
-public:
-  UnaryExprAST(TOKENS Opcode, std::unique_ptr<ExprAST> Operand)
-      : Opcode(Opcode), Operand(std::move(Operand)) {}
-
-  Value *codegen() override;
-};
-    /// BinaryExprAST - Expression class for a binary operator.
-    class BinaryExprAST : public ExprAST {
-        TOKENS Op;
-        std::unique_ptr<ExprAST> LHS, RHS;
-
-    public:
-        BinaryExprAST(TOKENS Op, std::unique_ptr<ExprAST> LHS,
-            std::unique_ptr<ExprAST> RHS)
-            : Op(Op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
-
-        Value* codegen() override;
-    };
-
-    /// CallExprAST - Expression class for function calls.
-    class CallExprAST : public ExprAST {
-        std::string Callee;
-        std::vector<std::unique_ptr<ExprAST>> Args;
-
-    public:
-        CallExprAST(const std::string& Callee,
-            std::vector<std::unique_ptr<ExprAST>> Args)
-            : Callee(Callee), Args(std::move(Args)) {}
-
-        Value* codegen() override;
-    };
-
-/// IfExprAST - Expression class for if/then/else.
-class IfExprAST : public ExprAST {
-  std::unique_ptr<ExprAST> Cond, Then, Else;
-
-public:
-  IfExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then,
-            std::unique_ptr<ExprAST> Else)
-      : Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
-
-  Value *codegen() override;
-};
-
-/// ForExprAST - Expression class for for/in.
-class ForExprAST : public ExprAST {
-  std::string VarName;
-  std::unique_ptr<ExprAST> Start, End, Step, Body;
-
-public:
-  ForExprAST(const std::string &VarName, std::unique_ptr<ExprAST> Start,
-             std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step,
-             std::unique_ptr<ExprAST> Body)
-      : VarName(VarName), Start(std::move(Start)), End(std::move(End)),
-        Step(std::move(Step)), Body(std::move(Body)) {}
-
-  Value *codegen() override;
-};
-
-/// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its name, and its argument names (thus implicitly the number
-/// of arguments the function takes).
-class PrototypeAST {
-  std::string Name;
-  std::vector<std::string> Args;
-  bool IsOperator;
-  unsigned Precedence; // Precedence if a binary op.
-
-public:
-  PrototypeAST(const std::string &Name, std::vector<std::string> Args,
-               bool IsOperator = false, unsigned Prec = 0)
-      : Name(Name), Args(std::move(Args)), IsOperator(IsOperator),
-        Precedence(Prec) {}
-
-  Function *codegen();
-  const std::string &getName() const { return Name; }
-
-  bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
-  bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
-
-  //char getOperatorName() const {
-  //  assert(isUnaryOp() || isBinaryOp());
-  //  return Name[Name.size() - 1];
- // }
-
-  unsigned getBinaryPrecedence() const { return Precedence; }
-};
-
-    /// FunctionAST - This class represents a function definition itself.
-    class FunctionAST {
-        std::unique_ptr<PrototypeAST> Proto;
-        std::unique_ptr<ExprAST> Body;
-
-    public:
-        FunctionAST(std::unique_ptr<PrototypeAST> Proto,
-            std::unique_ptr<ExprAST> Body)
-            : Proto(std::move(Proto)), Body(std::move(Body)) {}
-
-        Function* codegen();
-    };
-
-} // end anonymous namespace
-
-//===----------------------------------------------------------------------===//
-// Parser
-//===----------------------------------------------------------------------===//
-
-/// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
-/// token the parser is looking at.  getNextToken reads another token from the
-/// lexer and updates CurTok with its results.
-//static int CurTok;
-//static int getNextToken() { return CurTok = gettok(); }
-
-/// BinopPrecedence - This holds the precedence for each binary operator that is
-/// defined.
-static std::map<std::string, int> BinopPrecedence;
-
-static int BiopPrecedence[TK_NUM_TOKENS];
-static int PreopPrecedence[TK_NUM_TOKENS];
-static int PostopPrecedence[TK_NUM_TOKENS];
-enum class Associativity {
-    Left = 1,
-    Right = 2,
-    NonAssoc = 3,
-    BiopMask = 3,
-    Pre = 4,
-    Post = 8,
-    NotOperator = 16
-};
-static enum class Associativity OpAssoc[TK_NUM_TOKENS];
-
-/// GetTokPrecedence - Get the precedence of the pending binary operator token.
-static int GetTokPrecedence() {
-    if (((int)OpAssoc[Tokenizer.cur_token().token_number] & (int)Associativity::BiopMask) != 0) 
-        return BiopPrecedence[Tokenizer.cur_token().token_number];
-    if (Tokenizer.cur_token().token_number == TK_IDENT) {
-        char buf[30];
-        Tokenizer.cur_token().get_text(buf, sizeof(buf));
-        if (0!=BinopPrecedence.count(buf)) return BinopPrecedence[buf];
-    }
-    return -1;
-}
-
-/// LogError* - These are little helper functions for error handling.
-std::unique_ptr<ExprAST> LogError(const char* Str) {
-    *myerr << "Error: "<<Str<<"\n";
-    return nullptr;
-}
-
-std::unique_ptr<PrototypeAST> LogErrorP(const char* Str) {
-    LogError(Str);
-    return nullptr;
-}
-
-static std::unique_ptr<ExprAST> ParseExpression();
-
-/// numberexpr ::= number
-static std::unique_ptr<ExprAST> ParseNumberExpr() {
-    auto Result = std::make_unique<NumberExprAST>(Tokenizer.cur_token().as_double());
-    Tokenizer.tokenize(); // consume the number
-    return std::move(Result);
-}
-
-/// parenexpr ::= '(' expression ')'
-static std::unique_ptr<ExprAST> ParseParenExpr() {
-    Tokenizer.tokenize(); // eat (.
-    auto V = ParseExpression();
-    if (!V)
-        return nullptr;
-
-    if (Tokenizer.cur_token().token_number != TK_RP)
-        return LogError("expected ')'");
-    Tokenizer.tokenize(); // eat ).
-    return V;
-}
-
-/// identifierexpr
-///   ::= identifier
-///   ::= identifier '(' expression* ')'
-static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
-    char buf[100];
-    Tokenizer.cur_token().get_text(buf, 100);
-    std::string IdName = buf;
-
-    Tokenizer.tokenize(); // eat identifier.
-
-    if (Tokenizer.cur_token().token_number != TK_LP) // Simple variable ref.
-        return std::make_unique<VariableExprAST>(IdName);
-
-    // Call.
-    Tokenizer.tokenize(); // eat (
-    std::vector<std::unique_ptr<ExprAST>> Args;
-    if (Tokenizer.cur_token().token_number != TK_RP) {
-        while (true) {
-            if (auto Arg = ParseExpression())
-                Args.push_back(std::move(Arg));
-            else
-                return nullptr;
-
-            if (Tokenizer.cur_token().token_number == TK_RP)
-                break;
-
-            if (Tokenizer.cur_token().token_number != TK_COMMA)
-                return LogError("Expected ')' or ',' in argument list");
-            Tokenizer.tokenize();
-        }
-    }
-
-    // Eat the ')'.
-    Tokenizer.tokenize();
-
-    return std::make_unique<CallExprAST>(IdName, std::move(Args));
-}
-
-/// ifexpr ::= 'if' expression 'then' expression 'else' expression
-static std::unique_ptr<ExprAST> ParseIfExpr() {
-    Tokenizer.tokenize(); // eat the if.
-
-  // condition.
-  auto Cond = ParseExpression();
-  if (!Cond)
-    return nullptr;
-
-  if (Tokenizer.cur_token().token_number != TK_THEN)
-    return LogError("expected then");
-  Tokenizer.tokenize(); // eat the then
-
-  auto Then = ParseExpression();
-  if (!Then)
-    return nullptr;
-
-  if (Tokenizer.cur_token().token_number != TK_ELSE)
-    return LogError("expected else");
-
-  Tokenizer.tokenize();
-
-  auto Else = ParseExpression();
-  if (!Else)
-    return nullptr;
-
-  return std::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
-                                      std::move(Else));
-}
-
-/// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
-static std::unique_ptr<ExprAST> ParseForExpr() {
-    Tokenizer.tokenize(); // eat the for.
-
-  if (Tokenizer.cur_token().token_number != TK_IDENT)
-    return LogError("expected identifier after for");
-
-  char buf[100];
-  Tokenizer.cur_token().get_text(buf, 100);
-  std::string IdName = buf;
-
-  Tokenizer.tokenize(); // eat identifier.
-
-  if (Tokenizer.cur_token().token_number != TK_EQUAL)
-    return LogError("expected '=' after for");
-  Tokenizer.tokenize(); // eat '='.
-
-  auto Start = ParseExpression();
-  if (!Start)
-    return nullptr;
-  if (Tokenizer.cur_token().token_number != TK_COMMA)
-    return LogError("expected ',' after for start value");
-  Tokenizer.tokenize();
-
-  auto End = ParseExpression();
-  if (!End)
-    return nullptr;
-
-  // The step value is optional.
-  std::unique_ptr<ExprAST> Step;
-  if (Tokenizer.cur_token().token_number == TK_COMMA) {
-    Tokenizer.tokenize();
-    Step = ParseExpression();
-    if (!Step)
-      return nullptr;
-  }
-
-  if (Tokenizer.cur_token().token_number != TK_DO)
-    return LogError("expected 'do' after for");
-  Tokenizer.tokenize(); // eat 'in'.
-
-  auto Body = ParseExpression();
-  if (!Body)
-    return nullptr;
-
-  return std::make_unique<ForExprAST>(IdName, std::move(Start), std::move(End),
-                                       std::move(Step), std::move(Body));
-}
-
-/// primary
-///   ::= identifierexpr
-///   ::= numberexpr
-///   ::= parenexpr
-static std::unique_ptr<ExprAST> ParsePrimary() {
-    switch (Tokenizer.cur_token().token_number) {
-    default:
-        return LogError("unknown token when expecting an expression");
-    case TK_IDENT:
-        return ParseIdentifierExpr();
-    case TK_INTEGER_CONST:
-    case TK_REAL_CONST:
-        return ParseNumberExpr();
-    case TK_LP:
-        return ParseParenExpr();
-  case TK_IF:
-    return ParseIfExpr();
-  case TK_TO:
-    return ParseForExpr();
-  }
-}
-
-/// unary
-///   ::= primary
-///   ::= '!' unary
-static std::unique_ptr<ExprAST> ParseUnary() {
-  // If the current token is not an operator, it must be a primary expr.
-    // why comma when ParsePrimary can't handle commas?
-    switch (Tokenizer.cur_token().token_number) {
-    case TK_IDENT:
-    case TK_INTEGER_CONST:
-    case TK_REAL_CONST:
-    case TK_LP:
-    case TK_IF:
-    case TK_TO:
-    case TK_COMMA:
-        return ParsePrimary();
-    }
-  // If this is a unary operator, read it.
-  int Opc = Tokenizer.cur_token().token_number;
-  Tokenizer.tokenize();
-  if (auto Operand = ParseUnary())
-    return std::make_unique<UnaryExprAST>(Opc, std::move(Operand));
-  return nullptr;
-}
-
-/// binoprhs
-///   ::= ('+' primary)*
-static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
-    std::unique_ptr<ExprAST> LHS) {
-    // If this is a binop, find its precedence.
-    while (true) {
-        int TokPrec = GetTokPrecedence();
-
-        // If this is a binop that binds at least as tightly as the current binop,
-        // consume it, otherwise we are done.
-        if (TokPrec < ExprPrec)
-            return LHS;
-
-        // Okay, we know this is a binop.
-        TOKENS BinOp = (TOKENS)Tokenizer.cur_token().token_number;
-        Tokenizer.tokenize(); // eat binop
-
-    // Parse the unary expression after the binary operator.
-    auto RHS = ParseUnary();
-    if (!RHS)
-      return nullptr;
-
-        // If BinOp binds less tightly with RHS than the operator after RHS, let
-        // the pending operator take RHS as its LHS.
-        int NextPrec = GetTokPrecedence();
-        if (TokPrec < NextPrec) {
-            RHS = ParseBinOpRHS(TokPrec + 1, std::move(RHS));
-            if (!RHS)
-                return nullptr;
-        }
-
-        // Merge LHS/RHS.
-        LHS =
-            std::make_unique<BinaryExprAST>(BinOp, std::move(LHS), std::move(RHS));
-    }
-}
-
-/// expression
-///   ::= primary binoprhs
-///
-static std::unique_ptr<ExprAST> ParseExpression() {
-  auto LHS = ParseUnary();
-  if (!LHS)
-    return nullptr;
-
-    return ParseBinOpRHS(0, std::move(LHS));
-}
-
-/// prototype
-///   ::= id '(' id* ')'
-static std::unique_ptr<PrototypeAST> ParsePrototype() {
-  std::string FnName;
-  char buf[100];
-
-  unsigned Kind = 0; // 0 = identifier, 1 = unary, 2 = binary.
-  unsigned BinaryPrecedence = 30;
-/*
-static int BiopPrecedence[TK_NUM_TOKENS];
-static int PreopPrecedence[TK_NUM_TOKENS];
-static int PostopPrecedence[TK_NUM_TOKENS];
-enum class Associativity {
-    Left = 1,
-    Right = 2,
-    NonAssoc = 3,
-    BiopMask = 3,
-    Pre = 4,
-    Post = 8,
-    NotOperator = 16
-};
-static enum class Associativity OpAssoc[TK_NUM_TOKENS];*/
-
-  switch (Tokenizer.cur_token().token_number) {
-  default:
-    return LogErrorP("Expected function name in prototype");
-  case TK_IDENT:
-    
-    Tokenizer.cur_token().get_text(buf, 100);
-    FnName = buf;
-    Tokenizer.tokenize();
-    Kind = 0;
-    break;
-  case TK_PRE:
-  case TK_POST:
-      Tokenizer.tokenize();
-    if (Tokenizer.cur_token().token_number != TK_IDENT && (Tokenizer.cur_token().token_number < TK_MINUS || Tokenizer.cur_token().token_number> TK_COLONCOLON))
-      return LogErrorP("Expected unary operator");
-    FnName = "unary";
-    Tokenizer.cur_token().get_text(buf, 100);
-    FnName += buf;
-    Kind = 1;
-    Tokenizer.tokenize();
-    break;
-  case TK_BIOP:
-    Tokenizer.tokenize();
-    if (Tokenizer.cur_token().token_number != TK_IDENT && (Tokenizer.cur_token().token_number <TK_MINUS || Tokenizer.cur_token().token_number> TK_COLONCOLON))
-      return LogErrorP("Expected binary operator");
-    FnName = "binary";
-    Tokenizer.cur_token().get_text(buf, 100);
-    FnName += buf;
-    Kind = 2;
-    Tokenizer.tokenize();
-
-    // Read the precedence if present.
-    if (Tokenizer.cur_token().token_number == TK_INTEGER_CONST) {
-      if (Tokenizer.cur_token().int_value < 1 || Tokenizer.cur_token().int_value > 100)
-        return LogErrorP("Invalid precedence: must be 1..100");
-      BinaryPrecedence = (unsigned)Tokenizer.cur_token().int_value;
-      Tokenizer.tokenize();
-    }
-    break;
-  }
-
-  if (Tokenizer.cur_token().token_number != TK_LP)
-    return LogErrorP("Expected '(' in prototype");
-
-    std::vector<std::string> ArgNames;
-    while (Tokenizer.tokenize() && Tokenizer.cur_token().token_number == TK_IDENT) {
-        Tokenizer.cur_token().get_text(buf, 100);
-        ArgNames.push_back(buf);
-        Tokenizer.tokenize();
-        if (Tokenizer.cur_token().token_number != TK_COMMA) break;
-
-    }
-
-    if (Tokenizer.cur_token().token_number != TK_RP)
-        return LogErrorP("Expected ')' in prototype");
-
-    // success.
-    Tokenizer.tokenize(); // eat ')'.
-
-     // Verify right number of names for operator.
-    if (Kind && ArgNames.size() != Kind)
-        return LogErrorP("Invalid number of operands for operator");
-
-    return std::make_unique<PrototypeAST>(FnName, ArgNames, Kind != 0,
-        BinaryPrecedence);
-}
-
-/// definition ::= 'def' prototype expression
-static std::unique_ptr<FunctionAST> ParseDefinition() {
-    Tokenizer.tokenize(); // eat def.
-    auto Proto = ParsePrototype();
-    if (!Proto)
-        return nullptr;
-
-    if (auto E = ParseExpression())
-        return std::make_unique<FunctionAST>(std::move(Proto), std::move(E));
-    return nullptr;
-}
-
-/// toplevelexpr ::= expression
-static std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
-    if (auto E = ParseExpression()) {
-        // Make an anonymous proto.
-        auto Proto = std::make_unique<PrototypeAST>("__anon_expr",
-            std::vector<std::string>());
-        return std::make_unique<FunctionAST>(std::move(Proto), std::move(E));
-    }
-    return nullptr;
-}
-
-/// external ::= 'extern' prototype
-static std::unique_ptr<PrototypeAST> ParseExtern() {
-    Tokenizer.tokenize(); // eat extern.
-    return ParsePrototype();
-}
-
-//===----------------------------------------------------------------------===//
-// Code Generation
-//===----------------------------------------------------------------------===//
-
-static std::unique_ptr<LLVMContext> TheContext;
-static std::unique_ptr<Module> TheModule;
-static std::unique_ptr<IRBuilder<>> Builder;
-static std::map<std::string, Value *> NamedValues;
-static std::unique_ptr<legacy::FunctionPassManager> TheFPM;
-static std::unique_ptr<KaleidoscopeJIT> TheJIT;
-static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
-static ExitOnError ExitOnErr;
-
-Value* LogErrorV(const char* Str) {
-    LogError(Str);
-    return nullptr;
-}
-
-Function *getFunction(std::string Name) {
-  // First, see if the function has already been added to the current module.
-  if (auto *F = TheModule->getFunction(Name))
-    return F;
-
-  // If not, check whether we can codegen the declaration from some existing
-  // prototype.
-  auto FI = FunctionProtos.find(Name);
-  if (FI != FunctionProtos.end())
-    return FI->second->codegen();
-
-  // If no existing prototype exists, return null.
-  return nullptr;
-}
-
-Value *NumberExprAST::codegen() {
-  return ConstantFP::get(*TheContext, APFloat(Val));
-}
-
-Value* VariableExprAST::codegen() {
-    // Look this variable up in the function.
-    Value* V = NamedValues[Name];
-    if (!V)
-        return LogErrorV("Unknown variable name");
-    return V;
-}
-
-Value *UnaryExprAST::codegen() {
-  Value *OperandV = Operand->codegen();
-  if (!OperandV)
-    return nullptr;
-
-  Function *F = getFunction(std::string("unary") + Keywords[Opcode]);
-  if (!F)
-    return LogErrorV("Unknown unary operator");
-
-  return Builder->CreateCall(F, OperandV, "unop");
-}
-
-Value *BinaryExprAST::codegen() {
-  Value *L = LHS->codegen();
-  Value *R = RHS->codegen();
-  if (!L || !R)
-    return nullptr;
-
-    switch (Op) {
-    case TK_PLUS:
-        return Builder->CreateFAdd(L, R, "addtmp");
-    case TK_MINUS:
-        return Builder->CreateFSub(L, R, "subtmp");
-    case TK_ASTERIX:
-        return Builder->CreateFMul(L, R, "multmp");
-    case TK_LT:
-        L = Builder->CreateFCmpULT(L, R, "cmptmp");
-        // Convert bool 0/1 to double 0.0 or 1.0
-        return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
-    default:
-        return LogErrorV("invalid binary operator");
-    }
-  // If it wasn't a builtin binary operator, it must be a user defined one. Emit
-  // a call to it.
-  Function *F = getFunction(std::string("binary") + Keywords[Op]);
-  assert(F && "binary operator not found!");
-
-  Value *Ops[] = {L, R};
-  return Builder->CreateCall(F, Ops, "binop");
-}
-
-Value *CallExprAST::codegen() {
-  // Look up the name in the global module table.
-  Function *CalleeF = getFunction(Callee);
-  if (!CalleeF)
-    return LogErrorV("Unknown function referenced");
-
-    // If argument mismatch error.
-    if (CalleeF->arg_size() != Args.size())
-        return LogErrorV("Incorrect # arguments passed");
-
-    std::vector<Value*> ArgsV;
-    for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-        ArgsV.push_back(Args[i]->codegen());
-        if (!ArgsV.back())
-            return nullptr;
-    }
-
-    return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
-}
-
-Value *IfExprAST::codegen() {
-  Value *CondV = Cond->codegen();
-  if (!CondV)
-    return nullptr;
-
-  // Convert condition to a bool by comparing non-equal to 0.0.
-  CondV = Builder->CreateFCmpONE(
-      CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
-
-  Function *TheFunction = Builder->GetInsertBlock()->getParent();
-
-  // Create blocks for the then and else cases.  Insert the 'then' block at the
-  // end of the function.
-  BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then", TheFunction);
-  BasicBlock *ElseBB = BasicBlock::Create(*TheContext, "else");
-  BasicBlock *MergeBB = BasicBlock::Create(*TheContext, "ifcont");
-
-  Builder->CreateCondBr(CondV, ThenBB, ElseBB);
-
-  // Emit then value.
-  Builder->SetInsertPoint(ThenBB);
-
-  Value *ThenV = Then->codegen();
-  if (!ThenV)
-    return nullptr;
-
-  Builder->CreateBr(MergeBB);
-  // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
-  ThenBB = Builder->GetInsertBlock();
-
-  // Emit else block.
-  TheFunction->getBasicBlockList().push_back(ElseBB);
-  Builder->SetInsertPoint(ElseBB);
-
-  Value *ElseV = Else->codegen();
-  if (!ElseV)
-    return nullptr;
-
-  Builder->CreateBr(MergeBB);
-  // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
-  ElseBB = Builder->GetInsertBlock();
-
-  // Emit merge block.
-  TheFunction->getBasicBlockList().push_back(MergeBB);
-  Builder->SetInsertPoint(MergeBB);
-  PHINode *PN = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, "iftmp");
-
-  PN->addIncoming(ThenV, ThenBB);
-  PN->addIncoming(ElseV, ElseBB);
-  return PN;
-}
-
-// Output for-loop as:
-//   ...
-//   start = startexpr
-//   goto loop
-// loop:
-//   variable = phi [start, loopheader], [nextvariable, loopend]
-//   ...
-//   bodyexpr
-//   ...
-// loopend:
-//   step = stepexpr
-//   nextvariable = variable + step
-//   endcond = endexpr
-//   br endcond, loop, endloop
-// outloop:
-Value *ForExprAST::codegen() {
-  // Emit the start code first, without 'variable' in scope.
-  Value *StartVal = Start->codegen();
-  if (!StartVal)
-    return nullptr;
-
-  // Make the new basic block for the loop header, inserting after current
-  // block.
-  Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  BasicBlock *PreheaderBB = Builder->GetInsertBlock();
-  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
-
-  // Insert an explicit fall through from the current block to the LoopBB.
-  Builder->CreateBr(LoopBB);
-
-  // Start insertion in LoopBB.
-  Builder->SetInsertPoint(LoopBB);
-
-  // Start the PHI node with an entry for Start.
-  PHINode *Variable =
-      Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, VarName);
-  Variable->addIncoming(StartVal, PreheaderBB);
-
-  // Within the loop, the variable is defined equal to the PHI node.  If it
-  // shadows an existing variable, we have to restore it, so save it now.
-  Value *OldVal = NamedValues[VarName];
-  NamedValues[VarName] = Variable;
-
-  // Emit the body of the loop.  This, like any other expr, can change the
-  // current BB.  Note that we ignore the value computed by the body, but don't
-  // allow an error.
-  if (!Body->codegen())
-    return nullptr;
-
-  // Emit the step value.
-  Value *StepVal = nullptr;
-  if (Step) {
-    StepVal = Step->codegen();
-    if (!StepVal)
-      return nullptr;
-  } else {
-    // If not specified, use 1.0.
-    StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
-  }
-
-  Value *NextVar = Builder->CreateFAdd(Variable, StepVal, "nextvar");
-
-  // Compute the end condition.
-  Value *EndCond = End->codegen();
-  if (!EndCond)
-    return nullptr;
-
-  // Convert condition to a bool by comparing non-equal to 0.0.
-  EndCond = Builder->CreateFCmpONE(
-      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond");
-
-  // Create the "after loop" block and insert it.
-  BasicBlock *LoopEndBB = Builder->GetInsertBlock();
-  BasicBlock *AfterBB =
-      BasicBlock::Create(*TheContext, "afterloop", TheFunction);
-
-  // Insert the conditional branch into the end of LoopEndBB.
-  Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
-
-  // Any new code will be inserted in AfterBB.
-  Builder->SetInsertPoint(AfterBB);
-
-  // Add a new entry to the PHI node for the backedge.
-  Variable->addIncoming(NextVar, LoopEndBB);
-
-  // Restore the unshadowed variable.
-  if (OldVal)
-    NamedValues[VarName] = OldVal;
-  else
-    NamedValues.erase(VarName);
-
-  // for expr always returns 0.0.
-  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-}
-
-Function *PrototypeAST::codegen() {
-  // Make the function type:  double(double,double) etc.
-  std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
-  FunctionType *FT =
-      FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
-
-    Function* F =
-        Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
-
-    // Set names for all arguments.
-    unsigned Idx = 0;
-    for (auto& Arg : F->args())
-        Arg.setName(Args[Idx++]);
-
-    return F;
-}
-
-Function *FunctionAST::codegen() {
-  // Transfer ownership of the prototype to the FunctionProtos map, but keep a
-  // reference to it for use below.
-  auto &P = *Proto;
-  FunctionProtos[Proto->getName()] = std::move(Proto);
-  Function *TheFunction = getFunction(P.getName());
-  if (!TheFunction)
-    return nullptr;
-
-  // If this is an operator, install it.
-  if (P.isBinaryOp())
-    BinopPrecedence[P.getName()] = P.getBinaryPrecedence();
-
-  // Create a new basic block to start insertion into.
-  BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
-  Builder->SetInsertPoint(BB);
-
-    // Record the function arguments in the NamedValues map.
-    NamedValues.clear();
-    for (auto& Arg : TheFunction->args())
-        NamedValues[std::string(Arg.getName())] = &Arg;
-
-    if (Value* RetVal = Body->codegen()) {
-        // Finish off the function.
-        Builder->CreateRet(RetVal);
-
-        // Validate the generated code, checking for consistency.
-        verifyFunction(*TheFunction);
-
-    // Run the optimizer on the function.
-    TheFPM->run(*TheFunction);
-
-    return TheFunction;
-  }
-
-  // Error reading body, remove function.
-  TheFunction->eraseFromParent();
-
-  if (P.isBinaryOp())
-    BinopPrecedence.erase(P.getName());
-  return nullptr;
-}
-
-//===----------------------------------------------------------------------===//
-// Top-Level parsing and JIT Driver
-//===----------------------------------------------------------------------===//
-
-static void InitializeModuleAndPassManager() {
-  // Open a new context and module.
-  TheContext = std::make_unique<LLVMContext>();
-  TheModule = std::make_unique<Module>("my cool jit", *TheContext);
-  TheModule->setDataLayout(TheJIT->getDataLayout());
-
-  // Create a new builder for the module.
-  Builder = std::make_unique<IRBuilder<>>(*TheContext);
-
-  // Create a new pass manager attached to it.
-  TheFPM = std::make_unique<legacy::FunctionPassManager>(TheModule.get());
-
-  // Do simple "peephole" optimizations and bit-twiddling optzns.
-  TheFPM->add(createInstructionCombiningPass());
-  // Reassociate expressions.
-  TheFPM->add(createReassociatePass());
-  // Eliminate Common SubExpressions.
-  TheFPM->add(createGVNPass());
-  // Simplify the control flow graph (deleting unreachable blocks, etc).
-  TheFPM->add(createCFGSimplificationPass());
-
-  TheFPM->doInitialization();
-}
-
-static void HandleDefinition() {
-  if (auto FnAST = ParseDefinition()) {
-    if (auto *FnIR = FnAST->codegen()) {
-      *myerr << "Read function definition:";
-      FnIR->print(*myerr);
-      *myerr<<"\n";
-      ExitOnErr(TheJIT->addModule(
-          ThreadSafeModule(std::move(TheModule), std::move(TheContext))));
-      InitializeModuleAndPassManager();
-    }
-  } else {
-    // Skip token for error recovery.
-    Tokenizer.tokenize();
-  }
-}
-
-static void HandleExtern() {
-  if (auto ProtoAST = ParseExtern()) {
-    if (auto *FnIR = ProtoAST->codegen()) {
-      *myerr << "Read extern: ";
-      FnIR->print(*myerr);
-      *myerr << "\n";
-      FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
-    }
-  } else {
-    // Skip token for error recovery.
-    Tokenizer.tokenize();
-  }
-}
-
-static void HandleTopLevelExpression() {
-  // Evaluate a top-level expression into an anonymous function.
-  if (auto FnAST = ParseTopLevelExpr()) {
-    if (FnAST->codegen()) {
-      // Create a ResourceTracker to track JIT'd memory allocated to our
-      // anonymous expression -- that way we can free it after executing.
-      auto RT = TheJIT->getMainJITDylib().createResourceTracker();
-
-      auto TSM = ThreadSafeModule(std::move(TheModule), std::move(TheContext));
-      ExitOnErr(TheJIT->addModule(std::move(TSM), RT));
-      InitializeModuleAndPassManager();
-
-      // Search the JIT for the __anon_expr symbol.
-      auto ExprSymbol = ExitOnErr(TheJIT->lookup("__anon_expr"));
-
-      // Get the symbol's address and cast it to the right type (takes no
-      // arguments, returns a double) so we can call it as a native function.
-      double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
-      *myerr << "Evaluated to "<< FP()<<'\n';
-
-      // Delete the anonymous expression module from the JIT.
-      ExitOnErr(RT->remove());
-    }
-  } else {
-    // Skip token for error recovery.
-    Tokenizer.tokenize();
-  }
-}
-
-/// top ::= definition | external | expression | ';'
-static void MainLoop() {
-    while (true) {
-        *myerr<< "ready> ";
-        switch (Tokenizer.cur_token().token_number) {
-        case TK_EOF:
-            return;
-        case TK_SEMICOLON: // ignore top-level semicolons.
-            Tokenizer.tokenize();
-            break;
-        case TK_FUNCTION://instead of define
-            HandleDefinition();
-            break;
-        case TK_DECLARE://instead of extern
-            HandleExtern();
-            break;
-        default:
-            HandleTopLevelExpression();
-            break;
-        }
-    }
-}
-
-//===----------------------------------------------------------------------===//
-// Main driver code.
-//===----------------------------------------------------------------------===//
-
-std::string mainish(LPSTR source)
-{
-    errbuf.clear();
-    myerr = new raw_string_ostream(errbuf);
-
-    // Prime the first token.
-    Tokenizer.source.resize(strlen(source)+1);
-    Tokenizer.set_to_beginning_of_file();
-    strncpy(&Tokenizer.source[0], source, Tokenizer.source.size());
-
-    Tokenizer.tokenize();
-
- 
-
-    // Run the main "interpreter loop" now.
-    MainLoop();
-  
-
-    // Print out all of the generated code.
-    TheModule->print(*myerr, nullptr);
-    myerr->flush();
-    return  errbuf;
-}
-void init_parser()
-{
-    for (int i = 0; i < TK_NUM_TOKENS; ++i) {
-        BiopPrecedence[i] = 0;
-        PreopPrecedence[i] = 0;
-        PostopPrecedence[i] = 0;
-        OpAssoc[i] = Associativity::NotOperator;
-    }
-    // Install standard binary operators.
-    // 1 is lowest precedence.
-/*
-*
-*
-1	()   []   ->   .   ::	Function call, scope, array/member access
-2	   ~   -   +   *   &   sizeof   type cast   ++   --  	(most) unary operators, sizeof and type casts (right to left)
-3	*   /   % MOD	Multiplication, division, modulo
-4	+   -	Addition and subtraction
-5	<<   >>	Bitwise shift left and right
-6	&	Bitwise AND
-6	^	Bitwise exclusive OR (XOR)
-6	|	Bitwise inclusive (normal) OR
-7	<   <=   >   >=	Comparisons: less-than and greater-than
-7	==   !=	Comparisons: equal and not equal
-
-8	and
-8	or
-9   not
-10	? :	Conditional expression (ternary)
-11	=   +=   -=   *=   /=   %=   &=   |=   ^=   <<=   >>=	Assignment operators (right to left)
-12	,
-12  ;
-
-    TK_AND,              and
-        TK_NOT,          not
-        TK_OR,           or
-        TK_TO,
-        TK_BXOR,
-        TK_MINUS,
-        TK_ASTERIX,
-        TK_AMPERSAND,
-        TK_EXCLAMATION,
-        TK_TILDE,
-        TK_PLUSPLUS,
-        TK_MINUSMINUS,
-        TK_EQUAL,
-        TK_PLUSEQ,
-        TK_MINUSEQ,
-        TK_ASTERIXEQ,
-        TK_SLASHEQ,
-        TK_MODEQ,
-        TK_LTLTEQ,
-        TK_GTGTEQ,
-        TK_BANDEQ,
-        TK_BOREQ,
-        TK_BXOREQ,
-        TK_CAROT,
-        TK_LE,
-        TK_GE,
-        TK_LT,
-        TK_GT,
-        TK_EQEQ,
-        TK_NOTEQ,
-        TK_LTEQGT,
-        TK_DOTDOT,
-        TK_PERIOD,
-        TK_PIPE,
-        TK_GTGT,
-        TK_LTLT,
-        TK_PLUS,
-        TK_SLASH,
-        TK_QMARKEQ,
-        TK_QMARK,
-        TK_BSLASH,
-        TK_HASH,
-        TK_HASHPIPE,
-
-static int BiopPrecedence[TK_NUM_TOKENS];
-static int PreopPrecedence[TK_NUM_TOKENS];
-static int PostopPrecedence[TK_NUM_TOKENS];
-enum class Associativity {
-    Left    =   1,
-    Right   =   2,
-    NonAssoc=   3,
-    BiopMask=   3,
-    Pre     =   4,
-    Post    =   8,
-    NotOperator=16
-};
-static enum class Associativity OpAssoc[TK_NUM_TOKENS];
-        */
-    BiopPrecedence[TK_LT] = 10;
-    OpAssoc[TK_LT] = Associativity::Left;
-    BiopPrecedence[TK_PLUS] = 20;
-    OpAssoc[TK_PLUS] = Associativity::Left;
-    BiopPrecedence[TK_MINUS] = 20;
-    OpAssoc[TK_MINUS] = Associativity::Left;
-    BiopPrecedence[TK_ASTERIX] = 40; // highest.
-    OpAssoc[TK_ASTERIX] = Associativity::Left;
-
-    InitializeNativeTarget();
-    InitializeNativeTargetAsmPrinter();
-    InitializeNativeTargetAsmParser();
-    TheJIT = ExitOnErr(KaleidoscopeJIT::Create());
-
-    InitializeModuleAndPassManager();
-
-}
 #else
 class lexer_generator
 {
@@ -1623,41 +269,7 @@ public:
 
 };
 lexer_generator LexerGen;
-/*
-int main()
-{
-    std::ifstream t("C:\\local\\tinycc\\pre.c");
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    std::string b = buffer.str();
-    lexer_iterator<std::string::iterator> lexer(b.begin(), b.end());
-
-    do
-    {
-        std::cout << lexer->value << token_names[(int)lexer->type + 1] << '\n';
-        lexer.next();
-    } while (lexer->type != token_type::ENDOFFILE);
-    return 0;
-}*/
 LPSTR UnicodeToUTF8(LPCTSTR s);
-/*
-GraphemeString nye(L"ñññññññ"),
- hindi(L"अनुच्छेद"),
- emojis(L"🌷🎁💩😜👍🏳️‍🌈"),
- diacritics(L"Ĺo͂řȩm̅"),
- korean(L"뎌쉐"),
- zalgo(L"Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞");
- 
-GraphemeString source1(L"ñññññññअनुच्छेद🌷🎁💩😜👍🏳️‍🌈Ĺo͂řȩm̅뎌쉐Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞");
-GraphemeString source2 = source1.slice(7, -1);
-
-GraphemeString nye = source1.slice(0, 6).deep_copy(),
-hindi = source2.slice(0, 4).deep_copy(),
-emojis = source2.slice(5, 10).deep_copy(),
-diacritics = source2.slice(11, 15).deep_copy(),
-korean = source2.slice(16, 17).deep_copy(),
-zalgo = source2.slice(18,-1).deep_copy();
-*/
 struct unicode_property {
     utf8proc_category_t value;
     const char* name;
@@ -2949,102 +1561,291 @@ void lexer_generator::make_skip_nfa(GraphemeString &expression) {
         throw std::runtime_error((char*)errorbuf);
     }
 }
+#include "CollectableHash.h"
+
+RootPtr<CollectableString> int_to_collectable_string(int a)
+{
+    std::stringstream ss;
+    ss << a;
+    return new CollectableString(ss.str().c_str());
+}
+
+GraphemeString int_to_grapheme_string(int a)
+{
+    std::stringstream ss;
+    ss << a;
+    return GraphemeString(ss.str().c_str());
+}
+
+
+std::string scan(LPSTR source);
+
 std::string mainish(LPSTR source)
 {
-
     GraphemeString b(source);
- //   GraphemeStringBuilder b;
+    //   GraphemeStringBuilder b;
 
- //   b << nye << hindi << emojis << diacritics;
-    //b << korean << zalgo;
+    //   b << nye << hindi << emojis << diacritics;
+       //b << korean << zalgo;
     std::ostringstream t;
-/*
-    char* src = "a\r\nb";
 
-    for (int i = 0; 0 != src[i]; ++i) {
-        t << (int)src[i] << ' ';
+    RootPtr< CollectableKeyHashTable<CollectableString, GraphemeString> > ckh = new CollectableKeyHashTable<CollectableString, GraphemeString>(GraphemeString(""));
+    RootPtr< CollectableValueHashTable<GraphemeString, CollectableString> > cvh = new CollectableValueHashTable<GraphemeString, CollectableString>();
+    RootPtr< CollectableHashTable<CollectableString, CollectableString> > ch = new CollectableHashTable<CollectableString, CollectableString>();
+    RootPtr< HashTable<GraphemeString, GraphemeString> > h = new HashTable<GraphemeString, GraphemeString>(GraphemeString(""));
+
+
+    for (int i = 0; i < 10000; ++i) {
+        RootPtr<CollectableString> cs = int_to_collectable_string(i);
+        GraphemeString gs = int_to_grapheme_string(i);
+
+        ckh->insert_or_assign(cs, gs);
+        cvh->insert_or_assign(gs, cs);
+        h->insert_or_assign(gs, gs);
+        ch->insert_or_assign(cs,cs);
+    }
+    bool s = true;
+    for (int i = 0; i < 10000; ++i) {
+        RootPtr<CollectableString> cs = int_to_collectable_string(i);
+        GraphemeString gs = int_to_grapheme_string(i);
+
+        s = s && ckh->contains(cs) && ckh[cs]== gs;
+        if (!s) {
+            t << i<<" failed at 1\n";
+            goto done;
+        }
+        s = s && cvh->contains(gs) && cvh[gs]->equal(cs.get());
+        if (!s) {
+            t << i << " failed at 2\n";
+            goto done;
+        }
+        s = s && h->contains(gs) && h[gs]== gs;
+        if (!s) {
+            t << i << " failed at 3\n";
+            goto done;
+        }
+        s = s && ch->contains(cs) && ch[cs]->equal(cs.get());
+        if (!s) {
+            t << i << " failed at 4\n";
+            goto done;
+        }
+    }
+    for (int i = 0; i < 10000; i+=2) {
+        RootPtr<CollectableString> cs = int_to_collectable_string(i);
+        GraphemeString gs = int_to_grapheme_string(i);
+
+        ckh->erase(cs);
+        cvh->erase(gs);
+        h->erase(gs);
+        ch->erase(cs);
     }
 
-    t << '\n';
-    GraphemeString b(src);
+    for (int i = 0; i < 10000; ++i) {
+        RootPtr<CollectableString> cs = int_to_collectable_string(i);
+        GraphemeString gs = int_to_grapheme_string(i);
 
-    for (int i = 0; 0 != b.grapheme_at(i); ++i) {
-        t << b.grapheme_at(i) <<' '<< b.grapheme_at(i,1) << ',';
+        if ((i & 1) != 0) {
+            s = s && ckh->contains(cs) && ckh[cs] == gs;
+            if (!s) {
+                t << i <<" = " << cs << " contains" << (ckh->contains(cs) ? "true" : "false") << " value " << ckh[cs] << " should be " << gs << " failed at 5\n";
+                //goto done;
+                s = true;
+            }
+            s = s && cvh->contains(gs) && cvh[gs]->equal(cs.get());
+            if (!s) {
+                t << i << " failed at 6\n";
+                //goto done;
+                s = true;
+            }
+            s = s && h->contains(gs) && h[gs] == gs;
+            if (!s) {
+                t << i << " failed at 7\n";
+                //goto done;
+                s = true;
+            }
+            s = s && ch->contains(cs) && ch[cs]->equal(cs.get());
+            if (!s) {
+                t << i << " failed at 8\n";
+                //goto done;
+                s = true;
+            }
+        }
+        else {
+            s = s && !ckh->contains(cs);
+            if (!s) {
+                t << i << " = " << cs << " contains" << (ckh->contains(cs) ? "true" : "false") << " value " << ckh[cs] << " should be " << gs << " failed at 9\n";
+                goto done;
+            }
+            s = s && !cvh->contains(gs);
+            if (!s) {
+                t << i << " failed at 10\n";
+                goto done;
+            }
+            s = s && !h->contains(gs);
+            if (!s) {
+                t << i << " failed at 11\n";
+                goto done;
+            }
+            s = s && !ch->contains(cs);
+            if (!s) {
+                t << i << " failed at 12\n";
+                goto done;
+            }
+        }
     }
-*/
-/*
-    char* n;
+    for (int i = 10000; i < 50000; ++i) {
+        RootPtr<CollectableString> cs = int_to_collectable_string(i);
+        GraphemeString gs = int_to_grapheme_string(i);
 
-    n = UnicodeToUTF8(emojis);
-    t << "emojis ="<<n<<'\n';
-    free(n);
+        ckh->insert_or_assign(cs, gs);
+        cvh->insert_or_assign(gs, cs);
+        h->insert_or_assign(gs, gs);
+        ch->insert_or_assign(cs, cs);
+    }
+    for (int i = 0; i < 10000; ++i) {
+        RootPtr<CollectableString> cs = int_to_collectable_string(i);
+        GraphemeString gs = int_to_grapheme_string(i);
 
-    n = UnicodeToUTF8(hindi);
-    t << "hindi =" << n << '\n';
-    free(n);
+        if (i>=10000 || (i & 1) != 0) {
+            s = s && ckh->contains(cs) && ckh[cs] == gs;
+            if (!s) {
+                t << i << " failed at 13\n";
+                goto done;
+            }
+            s = s && cvh->contains(gs) && cvh[gs]->equal(cs.get());
+            if (!s) {
+                t << i << " failed at 14\n";
+                goto done;
+            }
+            s = s && h->contains(gs) && h[gs] == gs;
+            if (!s) {
+                t << i << " failed at 15\n";
+                goto done;
+            }
+            s = s && ch->contains(cs) && ch[cs]->equal(cs.get());
+            if (!s) {
+                t << i << " failed at 16\n";
+                goto done;
+            }
+        }
+        else {
+            s = s && !ckh->contains(cs);
+            if (!s) {
+                t << i << " failed at 17\n";
+                goto done;
+            }
+            s = s && !cvh->contains(gs);
+            if (!s) {
+                t << i << " failed at 18\n";
+                goto done;
+            }
+            s = s && !h->contains(gs);
+            if (!s) {
+                t << i << " failed at 19\n";
+                goto done;
+            }
+            s = s && !ch->contains(cs);
+            if (!s) {
+                t << i << " failed at 20\n";
+                goto done;
+            }
+        }
+    }
+    if (s) t << "success!";
+done:;
+    /*
+        char* src = "a\r\nb";
 
-    n = UnicodeToUTF8(nye);
-    t << "nye =" << n << '\n';
-    free(n);
+        for (int i = 0; 0 != src[i]; ++i) {
+            t << (int)src[i] << ' ';
+        }
 
-    n = UnicodeToUTF8(diacritics);
-    t << "diacritics =" << n << '\n';
-    free(n);
+        t << '\n';
+        GraphemeString b(src);
 
-    n = UnicodeToUTF8(korean);
-    t << "korean =" << n << '\n';
-    free(n);
-
-    n = UnicodeToUTF8(zalgo);
-    t << "zalgo =" << n << '\n';
-    free(n);
+        for (int i = 0; 0 != b.grapheme_at(i); ++i) {
+            t << b.grapheme_at(i) <<' '<< b.grapheme_at(i,1) << ',';
+        }
     */
+    /*
+        char* n;
 
-/*
-    GraphemeString bt(b.build());
-    t << "build " << hindi.grapheme_num_codepoints(3) << " done\n";
-    t << "hindi" << hindi << '\n';
-    for (auto a : hindi)t << "forward char '" << a << "'\n";
-    for (auto a = hindi.rbegin(); a != hindi.rend();++a) {
-        t << "char '" << *a << "'\n";
-    }
-    t << "emojis" << emojis << '\n';
-    for (auto a : emojis)t << "forward char '" << a << "'\n";
-    for (auto a = emojis.rbegin(); a != emojis.rend(); ++a) {
-        t << "char '" << *a << "'\n";
-    }
-    t << "nye" << nye << '\n';
-    for (auto a : nye)t << "forward char '" << a << "'\n";
-    for (auto a = nye.rbegin(); a != nye.rend(); ++a) {
-        t << "char '" << *a << "'\n";
-    }
-    t << "diacritics" << diacritics << '\n';
-    for (auto a : diacritics)t << "forward char '" << a << "'\n";
-    for (auto a = diacritics.rbegin(); a != diacritics.rend(); ++a) {
-        t << "char '" << *a << "'\n";
-    }
-    t << "korean" << korean << '\n';
-    for (auto a : korean)t << "forward char '" << a << "'\n";
-    for (auto a = korean.rbegin(); a != korean.rend(); ++a) {
-        t << "char '" << *a << "'\n";
-    }
-    t << "zalgo" << zalgo << '\n';
-    for (auto a : zalgo)t << "forward char '" << a << "'\n";
-    for (auto a = zalgo.rbegin(); a != zalgo.rend(); ++a) {
-        t << "char '" << *a << "'\n";
-    }
-    */
-    //bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
- /*   GraphemeString test("121 auto");
-    t << " '123'.size() " << GraphemeString("123") <<" = " << GraphemeString("123").size() << " byte length " << GraphemeString("123").byte_length() << " codepoint length " << GraphemeString("123").codepoint_length() << '\n';
-    GraphemeString t2("0123456789");
-    t << " 2-5 " << t2.slice(2, 5) << " [3] " << t2[3] << "slice eq test " << (t2[2] == "2" ? " pass0 " : " fail0 ") << (t2[1] == "1" ? " pass1 " : " fail1 ")
-        << (t2.slice(2, 3) == "23" ? " pass2 " : " fail2 ") << '\n';
+        n = UnicodeToUTF8(emojis);
+        t << "emojis ="<<n<<'\n';
+        free(n);
+
+        n = UnicodeToUTF8(hindi);
+        t << "hindi =" << n << '\n';
+        free(n);
+
+        n = UnicodeToUTF8(nye);
+        t << "nye =" << n << '\n';
+        free(n);
+
+        n = UnicodeToUTF8(diacritics);
+        t << "diacritics =" << n << '\n';
+        free(n);
+
+        n = UnicodeToUTF8(korean);
+        t << "korean =" << n << '\n';
+        free(n);
+
+        n = UnicodeToUTF8(zalgo);
+        t << "zalgo =" << n << '\n';
+        free(n);
+        */
+
+        /*
+            GraphemeString bt(b.build());
+            t << "build " << hindi.grapheme_num_codepoints(3) << " done\n";
+            t << "hindi" << hindi << '\n';
+            for (auto a : hindi)t << "forward char '" << a << "'\n";
+            for (auto a = hindi.rbegin(); a != hindi.rend();++a) {
+                t << "char '" << *a << "'\n";
+            }
+            t << "emojis" << emojis << '\n';
+            for (auto a : emojis)t << "forward char '" << a << "'\n";
+            for (auto a = emojis.rbegin(); a != emojis.rend(); ++a) {
+                t << "char '" << *a << "'\n";
+            }
+            t << "nye" << nye << '\n';
+            for (auto a : nye)t << "forward char '" << a << "'\n";
+            for (auto a = nye.rbegin(); a != nye.rend(); ++a) {
+                t << "char '" << *a << "'\n";
+            }
+            t << "diacritics" << diacritics << '\n';
+            for (auto a : diacritics)t << "forward char '" << a << "'\n";
+            for (auto a = diacritics.rbegin(); a != diacritics.rend(); ++a) {
+                t << "char '" << *a << "'\n";
+            }
+            t << "korean" << korean << '\n';
+            for (auto a : korean)t << "forward char '" << a << "'\n";
+            for (auto a = korean.rbegin(); a != korean.rend(); ++a) {
+                t << "char '" << *a << "'\n";
+            }
+            t << "zalgo" << zalgo << '\n';
+            for (auto a : zalgo)t << "forward char '" << a << "'\n";
+            for (auto a = zalgo.rbegin(); a != zalgo.rend(); ++a) {
+                t << "char '" << *a << "'\n";
+            }
+            */
+            //bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
+         /*   GraphemeString test("121 auto");
+            t << " '123'.size() " << GraphemeString("123") <<" = " << GraphemeString("123").size() << " byte length " << GraphemeString("123").byte_length() << " codepoint length " << GraphemeString("123").codepoint_length() << '\n';
+            GraphemeString t2("0123456789");
+            t << " 2-5 " << t2.slice(2, 5) << " [3] " << t2[3] << "slice eq test " << (t2[2] == "2" ? " pass0 " : " fail0 ") << (t2[1] == "1" ? " pass1 " : " fail1 ")
+                << (t2.slice(2, 3) == "23" ? " pass2 " : " fail2 ") << '\n';
 
 
-    t << "n " << (test[0]=="1"?"pass0 ":"fail0 ") << " r " << (test[1] == GraphemeString("2a")[0] ? "pass1 " : "fail1 ")  << " n "  << (test[2] == "1" ? "pass2 " : "fail2 ") <<
-        " s " << (test[3] == " " ? "pass3 " : "fail3 ") << " a " << (test[4] == "a" ? "pass4 " : "fail4 ") << "' \n";
-*/
+            t << "n " << (test[0]=="1"?"pass0 ":"fail0 ") << " r " << (test[1] == GraphemeString("2a")[0] ? "pass1 " : "fail1 ")  << " n "  << (test[2] == "1" ? "pass2 " : "fail2 ") <<
+                " s " << (test[3] == " " ? "pass3 " : "fail3 ") << " a " << (test[4] == "a" ? "pass4 " : "fail4 ") << "' \n";
+        */
+    return t.str();
+}
+std::string scan(LPSTR source)
+{
+    GraphemeString b(source);
+    std::ostringstream t;
     GraphemeString* found;
     int pos = 0;
     int startpos = 0;
@@ -3072,59 +1873,59 @@ void init_parser()
     try{
 #define FULLTEST
 #ifdef FULLTEST
+        /*
+qualified_name:  (IDENT ':')* IDENT
+
+constant_exp
+    : NUM_INT
+    | YES
+    | NO
+    | NIL
+    | ATOMCONST
+    | NUM_REAL
+    | STRING_LITERAL
+    | specify
+
+type: explicit_type
+    | CLASS qualified_name
+    | LOGICAL (type)?
+    | | (FUNCTION|GENERATOR) '(' (type (',' type)*)? ')' (RETURNING type)?
+
+//can new an explicit type
+explicit_type
+    : simple_type
+    | ARRAY NUM_INT? (OF type)?
+    | QUEUE (OF type)?
+    | MESSAGE QUEUE (OF type)?
+    | TABLE (BY type)? (OF type)?
+    | LIST (OF type)?
+    | TREE (OF type)?
+    | POINTER TO type
+    | RECORD qualified_name
+
+simple_type
+    : 'big'
+    | 'integer'
+    | 'byte'
+    | 'real'
+    | 'string'
+    | 'whether'
+    | 'atom'
+    | 'boxed'
+    | 'continuation'
+  
+    ;        */
         LexerGen
-            .prod("OPEN_BRACKET", "\\[")
-            .prod("CLOSE_BRACKET", "\\]")
-            .prod("OPEN_PAREN", "\\(")
-            .prod("CLOSE_PAREN", "\\)")
-            .prod("OPEN_BRACE", "\\{")
-            .prod("CLOSE_BRACE", "\\}")
-            .prod("PERIOD", ".")
-            .prod("AMP", "&")
-            .prod("PIPE", "\\|")
-            .prod("AND", "&&")
-            .prod("OR", "\\|\\|")
-            .prod("PLUS", "\\+")
-            .prod("WIDEPLUS", u8"＋")
-            .prod("MINUS", "\\-")
-            .prod("TILDE", "~")
-            .prod("MUL", "\\*")
-            .prod("DIV", "/")
-            .prod("BANG", "!")
-            .prod("MOD", "%")
-            .prod("ASSIGN", "=")
-            .prod("POINTSTO", "->")
-            .prod("ADD_ASSIGN", "\\+=")
-            .prod("SUB_ASSIGN", "\\-=")
-            .prod("MUL_ASSIGN", "\\*=")
-            .prod("DIV_ASSIGN", "/=")
-            .prod("AND_ASSIGN", "&=")
-            .prod("OR_ASSIGN", "\\|=")
-            .prod("XOR_ASSIGN", "^=")
-            .prod("MOD_ASSIGN", "%=")
-            .prod("SHL_ASSIGN", "<<=")
-            .prod("SHR_ASSIGN", ">>=")
-            .prod("XOR", "^")
-            .prod("QMARK", "\\?")
-            .prod("SHL", "<<")
-            .prod("SHR", ">>")
-            .prod("LT", "<")
-            .prod("GT", ">")
-            .prod("LE", "<=")
-            .prod("GE", ">=")
-            .prod("NE", "!=")
-            .prod("EQ", "==")
-            .prod("PREPROCESS_LINE", "#[^\\n]*+")//{}{}{} not processed correctly
             .prod("IDENT", "[\\p{:word:}_][_\\p{:alnum:}]*+")
             .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
-            .prod("COMMA", ",")
-            .prod("COLON", "\\:")
-            .prod("SEMICOLON", ";")
-            .prod("STRING", "(L|u|U|u8)?R?\"(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\])*\"s?")
-            .prod("CHAR", "(L|u|U|u8)?R?'(\\\\([\"'\\\\/bfrntav0]|[0-7][0-7][0-7]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^'\\\\])*'")
-            .prod("NUMBER", "-?([\\p{:digit:}]*+)(.[\\p{:digit:}]++)?([Ee][+\\-]?([\\p{:digit:}]*+))?(u|U)?(d|f|LL|L)?")
+            .prod("STRING", "\"(\\\\([^xu]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\]*+)*\"s?")
+            .prod("NUM_REAL", ":digit:++.:digit:*+([Ee][+\\-]?:digit:++)?|.:digit:++([Ee][+\\-]?:digit:++)?|:digit:++[Ee][+\\-]?:digit:++")
+            .prod("NUM_INT", ":digit:++|0x[:digit:a-fA-F]++|0b[01]++")
+            .prod("(","\\(")
+            .prod(")", "\\)")
+            .prod(".", ".")
 
-        .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
+            .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
         .skip("//[^\\n\\r]*+[\\r\\n]")
         .skip("[\\p{:space:}]++")
         ;

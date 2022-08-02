@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-
+#include "GCState.h"
 
 extern COutputWnd *output_window;
 
@@ -491,14 +491,17 @@ void COutputWnd::AddLineWindow(wchar_t * path, LPSTR filename, LPSTR t, int wind
 	}else if (is_ll){
 	}
 	else {
-		static bool intialized = false;
-		if (!intialized) {
-			init_parser();
-			intialized = true;
+		{
+			GC::EnterMutationRAII gc_code;
+			static bool intialized = false;
+			if (!intialized) {
+				init_parser();
+				intialized = true;
+			}
+
+			message << filename << " parse '" << mainish(t) << "'\n";
+
 		}
-
-		message << filename << " parse '" << mainish(t) << "'\n";
-
 		LPTSTR tbuffer = UTF8ToUnicodeAndTranslateLF(message.str().c_str());
 
 		m_wndOutputBuild.append_text(tbuffer);

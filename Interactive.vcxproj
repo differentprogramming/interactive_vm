@@ -121,7 +121,7 @@
       <AdditionalOptions>/F 20000000 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -216,7 +216,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="Collectable.h" />
+    <ClInclude Include="CollectableHash.h" />
     <ClInclude Include="dirent_for_windows.h" />
+    <ClInclude Include="GCState.h" />
     <ClInclude Include="grapheme.h" />
     <ClInclude Include="hashtable.h" />
     <ClInclude Include="InputDialog.h" />
@@ -225,6 +228,7 @@
     <ClInclude Include="InteractiveView.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="OutputWnd.h" />
+    <ClInclude Include="pevents\pevents.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="spooky.h" />
     <ClInclude Include="stdafx.h" />
@@ -233,7 +237,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="Collectable.cpp" />
+    <ClCompile Include="CollectableHash.cpp" />
     <ClCompile Include="dirent_for_windows.cpp" />
+    <ClCompile Include="GCState.cpp" />
     <ClCompile Include="grapheme.cpp" />
     <ClCompile Include="hashtable.cpp" />
     <ClCompile Include="InputDialog.cpp" />
@@ -243,6 +250,8 @@
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="oldparser.cpp" />
     <ClCompile Include="OutputWnd.cpp" />
+    <ClCompile Include="pevents\pevents.cpp" />
+    <ClCompile Include="portablegc.cpp" />
     <ClCompile Include="spooky.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

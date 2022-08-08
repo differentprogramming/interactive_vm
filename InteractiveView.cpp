@@ -241,6 +241,6 @@ int CInteractiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 			}
 		}
 	}
-
+	GetEditCtrl().SetLimitText(300000000);
 	return 0;
 }

@@ -96,7 +96,6 @@
 #include "tinyutf8.h"
 #include <propkey.h>
 #include "Collectable.h"
-#include "oniguruma/oniguruma.h"
 
 
 #define UTF8PROC_STATIC

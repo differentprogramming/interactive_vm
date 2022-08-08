@@ -125,13 +125,13 @@
     <ClCompile Include="GCState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pevents\pevents.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CollectableHash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="portablegc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

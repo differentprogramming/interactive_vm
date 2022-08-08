@@ -250,7 +250,6 @@
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="oldparser.cpp" />
     <ClCompile Include="OutputWnd.cpp" />
-    <ClCompile Include="pevents\pevents.cpp" />
     <ClCompile Include="portablegc.cpp" />
     <ClCompile Include="spooky.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -260,6 +259,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="utf8proc\utf8proc.c" />
+    <ClCompile Include="vm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Interactive.rc" />

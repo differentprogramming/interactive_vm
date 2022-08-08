@@ -214,54 +214,175 @@ int cat_set_count(debug_cat_set& s, debug_cat_set& n)
 #ifdef NOOOOO
 
 #else
+typedef int32_t Atom;
+
+ enum class LLex {
+    IDENT,
+    dontcare,
+    plus,
+    minus,
+    mul,
+    div,
+    rem,
+    assign,
+    eq,
+    le,
+    ge,
+    gt,
+    lt,
+    shiftl,
+    shiftr,
+    ne,
+    and,
+    or ,
+    xor,
+    not,
+    band,
+    bor,
+    bxor,
+    bnot,
+    visible,
+    atomic,
+    ordered,
+    relaxed,
+    sequential,
+    thread,
+    join,
+    visible_lifo,
+    mutex,
+    rwmutex,
+    event,
+    hold,
+    read_hold,
+    modify_hold,
+    i32,
+    u32,
+    i64,
+    u64,
+    i16,
+    u16,
+    i8,
+    u8,
+    string,
+    float_,
+    double_,
+    any,
+    const_,
+    let,
+    define,
+    break_,
+    let_loop,
+    while_,
+    until_,
+    continue_,
+    cond,
+    lambda,
+    call_cc,
+    continuation,
+    continuable,
+    search,
+    fail,
+    yes,
+    no,
+    cut,
+    amb,
+    constructor,
+    destructor,
+    on_unwind,
+    on_wind,
+    finalize,
+    impl,
+    switch_,
+    inline_,
+    float_intrinsic,
+    tuple,
+    struct_,
+    alg,
+    ref,
+    array,
+    cast,
+    ptr,
+    vector,
+    return_,
+    co_return_,
+    return_from,
+    call,
+    real,
+    int_,
+    lp,
+    rp,
+    dot_call,
+    dot,
+    skip,
+    NUMBER_OF_TOKENS
+};
+ std::unordered_map < GraphemeString, Atom> name_to_atom;
+ std::vector <GraphemeString*> atom_to_name((int)LLex::NUMBER_OF_TOKENS, nullptr);
+
 class lexer_generator
 {
-    void make_nfa(GraphemeString &name, GraphemeString &expression);
+    void make_nfa( LLex l, GraphemeString &name, GraphemeString &expression);
     void make_skip_nfa(GraphemeString &expression);
 public:
-    lexer_generator& prod(const char* _name, const wchar_t* _expression)
+    lexer_generator& prod( LLex l, const char* _name, const wchar_t* _expression)
     {
         GraphemeString name(_name);
         GraphemeString expression(_expression);
-        make_nfa(name, expression);
+        make_nfa(l, name, expression);
         return *this;
     }
-    lexer_generator&  prod(const char* _name,const char* _expression)
+    lexer_generator&  prod( LLex l, const char* _name,const char* _expression)
     {
         
         GraphemeString name(_name);
-        
+        name_to_atom.insert(std::make_pair(name, static_cast<Atom>(l)));
+        atom_to_name[static_cast<Atom>(l)] = new GraphemeString(name);
         GraphemeString expression(_expression);
         
-        make_nfa(name, expression);
+        make_nfa(l, name, expression);
         
-        return *this;
-    }
-
-    lexer_generator& prod(const wchar_t* _name, const wchar_t* _expression)
-    {
-        GraphemeString name(_name);
-        GraphemeString expression(_expression);
-        make_nfa(name, expression);
         return *this;
     }
 
-    lexer_generator& prod(const wchar_t* _name, const char* _expression)
+    lexer_generator& prod( LLex l, const wchar_t* _name, const wchar_t* _expression)
     {
         GraphemeString name(_name);
+        name_to_atom.insert(std::make_pair(name, static_cast<Atom>(l)));
+        atom_to_name[static_cast<Atom>(l)] = new GraphemeString(name);
         GraphemeString expression(_expression);
-        make_nfa(name, expression);
+        make_nfa(l, name, expression);
+        return *this;
+    }
+
+    lexer_generator& prod( LLex l, const wchar_t* _name, const char* _expression)
+    {
+        GraphemeString name(_name);
+        name_to_atom.insert(std::make_pair(name, static_cast<Atom>(l)));
+        atom_to_name[static_cast<Atom>(l)] = new GraphemeString(name);
+        GraphemeString expression(_expression);
+        make_nfa(l, name, expression);
         return *this;
     }
 
     lexer_generator& skip(const wchar_t* _expression)
     {
+        if (atom_to_name[static_cast<Atom>(LLex::skip)] == nullptr) {
+            GraphemeString name("skip");
+            name_to_atom.insert(std::make_pair(name, static_cast<Atom>(LLex::skip)));
+            atom_to_name[static_cast<Atom>(LLex::skip)] = new GraphemeString(name);
+        }
         GraphemeString expression(_expression);
         make_skip_nfa(expression);
         return *this;
     }
 
     lexer_generator& skip(const char* _expression) {
+        if (atom_to_name[static_cast<Atom>(LLex::skip)] == nullptr) {
+            GraphemeString name("skip");
+            name_to_atom.insert(std::make_pair(name, static_cast<Atom>(LLex::skip)));
+            atom_to_name[static_cast<Atom>(LLex::skip)] = new GraphemeString(name);
+        }
+
         GraphemeString expression(_expression);
         make_skip_nfa(expression);
         return *this;
@@ -344,12 +465,13 @@ struct nfa
     int no_match_nfa;
     int or_nfa;
     bool epsilon;
-    GraphemeString name;
+    //GraphemeString name;
+    Atom atom;
 
     nfa & nfa :: operator= (const nfa&) = default;
     nfa(const nfa&) = default;
 
-    nfa(GraphemeString& n) :name(n),match_nfa(-1),no_match_nfa(-1),or_nfa(-1), epsilon(true), can_end(false),end_priority(0), range_positive_count(0),range_negative_count(0), cat_positive_count(0), cat_negative_count(0) {}
+    nfa(Atom n) :atom(n),match_nfa(-1),no_match_nfa(-1),or_nfa(-1), epsilon(true), can_end(false),end_priority(0), range_positive_count(0),range_negative_count(0), cat_positive_count(0), cat_negative_count(0) {}
     void matches_ascii_range(char a, char b, bool negate = false) {
         epsilon = false;
         char buf[2];
@@ -386,7 +508,7 @@ struct nfa
     }
     //assumes that any ^ or ] or \p{ or :xxxxx: has already been processed
     //for use inside range, special characters aren't special
-    GraphemeString read_char(GraphemeString& s, int& pos, GraphemeString & production_name) {
+    GraphemeString read_char(GraphemeString& s, int& pos, Atom atom) {
         //while (s[pos] == " ")++pos;
         auto w = s[pos];
         if (w == "\\"){
@@ -406,7 +528,7 @@ struct nfa
             else if (w2 == "e") special = 0x1b;
             else if (w2 == "") {
                 uint8_t errorbuf[200];
-                (GraphemeString("in production ") + production_name + " character expected after backslash.").fill_utf8(errorbuf);
+                (GraphemeString("in production ") + *atom_to_name[atom] + " character expected after backslash.").fill_utf8(errorbuf);
                 lex_error_position = pos;
                 throw std::runtime_error((char*)errorbuf);
             }
@@ -422,7 +544,7 @@ struct nfa
         ++pos;
         return w;
     }
-    bool ProcessPossibleCharClass(GraphemeString& s, int& pos, bool negate, GraphemeString& production_name) 
+    bool ProcessPossibleCharClass(GraphemeString& s, int& pos, bool negate, Atom atom) 
     {
         uint8_t errorbuf[200];
         //while (s[pos] == " ")++pos;
@@ -537,7 +659,7 @@ struct nfa
                     return true;
                 }
             }
-            (GraphemeString("in production ") + production_name + " char class expected after : or colon has to be escaped with at backslash.").fill_utf8(errorbuf);
+            (GraphemeString("in production ") + *atom_to_name[atom] + " char class expected after : or colon has to be escaped with at backslash.").fill_utf8(errorbuf);
             lex_error_position = pos;
             throw std::runtime_error((char*)errorbuf);
 
@@ -834,26 +956,26 @@ struct nfa
             ++pos;
             return true;
         } else {
-                auto first = read_char(s,pos, production_name);
+                auto first = read_char(s,pos, atom);
                 int32_t first_codepoint;
                 first.fill_codepoints(&first_codepoint, false);
                 //while (s[pos] == " ")++pos;
                 if (s[pos] == "-") {
                     ++pos;
                     if (first.codepoint_length() > 1) {
-                        (GraphemeString("in production ") + production_name + " multi-codepoint character "+first+" can't be used in a range.").fill_utf8(errorbuf);
+                        (GraphemeString("in production ") + *atom_to_name[atom] + " multi-codepoint character "+first+" can't be used in a range.").fill_utf8(errorbuf);
                         lex_error_position = pos;
                         throw std::runtime_error((char*)errorbuf);
                     }
                     //while (s[pos] == " ")++pos;
                     if (s[pos] == "]" || s[pos] == "^" || s[pos]=="" || (s[pos] == "\\" && (s[pos+1] == "p"|| s[pos + 1] == "P"))) {
-                        (GraphemeString("in production ") + production_name + " end of range missing.").fill_utf8(errorbuf);
+                        (GraphemeString("in production ") + *atom_to_name[atom] + " end of range missing.").fill_utf8(errorbuf);
                         lex_error_position = pos;
                         throw std::runtime_error((char*)errorbuf);
                     }
-                    auto second = read_char(s, pos, production_name);
+                    auto second = read_char(s, pos, atom);
                     if (second.codepoint_length() > 1) {
-                        (GraphemeString("in production ") + production_name + " multi-codepoint character " + second + " can't be used in a range.").fill_utf8(errorbuf);
+                        (GraphemeString("in production ") + *atom_to_name[atom] + " multi-codepoint character " + second + " can't be used in a range.").fill_utf8(errorbuf);
                         lex_error_position = pos;
                         throw std::runtime_error((char*)errorbuf);
                     }
@@ -906,7 +1028,8 @@ struct nfa
 };
 std::vector<nfa> nfas;
 std::vector<int> nfa_start_states;
-std::unordered_map < GraphemeString, int> name_to_nfa;
+
+std::vector <int> atom_to_nfa((int)LLex::NUMBER_OF_TOKENS,0);
 
 struct last_found_nfa
 {
@@ -959,7 +1082,7 @@ int next_nfa(GraphemeString &next_char, int pos, int current, last_found_nfa& la
     }
 }
 
-bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos, int &startpos)
+bool nfa_parse(Atom &found, GraphemeString& source, int& pos, int &startpos)
 {
     startpos = pos;
     for (;;) {
@@ -970,7 +1093,7 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos, int &st
         while (concurrent.size() > 0) {
             report2("***about to start loop over %d elements for `%s`\n", (int)concurrent.size(),source[cur_pos].str());
             for (int state_index = 0; state_index < concurrent.size(); ++state_index) {
-                report4("at parallel state %d of %d, nfa# %d called %s \n", state_index, (int)concurrent.size(), concurrent[state_index], nfas[concurrent[state_index]].name.str());
+                report4("at parallel state %d of %d, nfa# %d called %s \n", state_index, (int)concurrent.size(), concurrent[state_index], atom_to_name[nfas[concurrent[state_index]].atom]->str());
                 int next_state = next_nfa(source[cur_pos], cur_pos, concurrent[state_index], last, concurrent);
                 if (next_state < 0) {
                     report2("state ended %d of %d\n", state_index, (int)concurrent.size());
@@ -983,14 +1106,14 @@ bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos, int &st
         }
         if (last.found >= 0) {
             if (nfas[last.found].end_priority == -2) {
-                report3("SKIPPING %s from %d to %d\n", nfas[last.found].name.str(), pos, last.pos);
+                report3("SKIPPING %s from %d to %d\n", atom_to_name[nfas[last.found].atom]->str(), pos, last.pos);
                 pos = last.pos;
                 startpos = pos;
                 if (source[pos] == "")return false;
                 continue;//skip
             }
-            found = &nfas[last.found].name;
-            report3("FOUND TOKEN %s from %d to %d\n",found->str(),pos, last.pos);
+            found = nfas[last.found].atom;
+            report3("FOUND TOKEN %s from %d to %d\n",atom_to_name[found]->str(),pos, last.pos);
             pos = last.pos-1;
 
             return true;
@@ -1040,8 +1163,8 @@ word
 //alignment ^ $ 
 //(parse_reg_or)
 */
-bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int &priority);
-bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int &priority) 
+bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, Atom atom, int &priority);
+bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, Atom atom, int &priority) 
 {
     uint8_t errorbuf[200];
     
@@ -1050,7 +1173,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
     if (s[pos] == "(") {
         ++pos;
         int pri = priority;
-        bool succeeded = parse_reg_or(s, pos, nfa_start_ret, nfa_end_ret, production_name,pri);
+        bool succeeded = parse_reg_or(s, pos, nfa_start_ret, nfa_end_ret, atom,pri);
         
         if (pri < priority)priority = pri;
         
@@ -1058,14 +1181,14 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
         
         if (s[pos] != ")") {
             
-            (GraphemeString("in production ") + production_name + " ) expected.").fill_utf8(errorbuf);
+            (GraphemeString("in production ") + *atom_to_name[atom] + " ) expected.").fill_utf8(errorbuf);
             lex_error_position = pos;
             throw std::runtime_error((char*)errorbuf);
         }
         ++pos;
         if (!succeeded){//epsilon
             int epsilon = nfas.size();
-            nfas.push_back(nfa(production_name));
+            nfas.push_back(nfa(atom));
             nfa_start_ret = nfa_end_ret = epsilon;
         }
         return true;
@@ -1085,13 +1208,13 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
         else if (s[pos] == "e") special = 0x1b;
         else if (s[pos] == "") {
             
-            (GraphemeString("in production ") + production_name + " character expected after backslash.").fill_utf8(errorbuf);
+            (GraphemeString("in production ") + *atom_to_name[atom] + " character expected after backslash.").fill_utf8(errorbuf);
             lex_error_position = pos;
             throw std::runtime_error((char*)errorbuf);
         }
         
         int r = nfas.size();
-        nfas.push_back(nfa(production_name));
+        nfas.push_back(nfa(atom));
         nfas[r].epsilon = false;
         
         nfa_start_ret = nfa_end_ret = r;
@@ -1110,7 +1233,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 pos += 6;
                
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'z');
                 nfas[r].matches_ascii_range('A', 'Z');
@@ -1124,7 +1247,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'z');
                 nfas[r].matches_ascii_range('A', 'Z');
@@ -1136,7 +1259,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range(0, 127);
 
@@ -1147,7 +1270,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
             else if (w == "blank") {
                 if (priority > -1) priority = -1;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_char(9);
                 nfas[r].matches_char(0x20);
@@ -1159,7 +1282,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range(1, 10);
                 nfas[r].matches_ascii_range(0xe, 0x1f);
@@ -1172,7 +1295,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('0', '9');
                 nfa_start_ret = nfa_end_ret = r;
@@ -1182,7 +1305,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'z');
                 nfa_start_ret = nfa_end_ret = r;
@@ -1192,7 +1315,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('!', '~');
                 nfa_start_ret = nfa_end_ret = r;
@@ -1202,7 +1325,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range(' ', '~');
                 nfas[r].matches_char('\t');
@@ -1218,7 +1341,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('!', '\\');
                 nfas[r].matches_ascii_range(':', '@');
@@ -1231,7 +1354,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_char(' ');
                 nfas[r].matches_char('\t');
@@ -1247,7 +1370,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
             if (priority > -1) priority = -1;
             pos += 7;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('A', 'Z');
                 nfa_start_ret = nfa_end_ret = r;
@@ -1259,7 +1382,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 if (priority > -1) priority = -1;
                 pos += 8;
                 int r = nfas.size();
-                nfas.push_back(nfa(production_name));
+                nfas.push_back(nfa(atom));
                 nfas[r].epsilon = false;
                 nfas[r].matches_ascii_range('a', 'f');
                 nfas[r].matches_ascii_range('A', 'F');
@@ -1268,7 +1391,7 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
                 return true;
             }
         }
-        (GraphemeString("in production ") + production_name + " char class expected after : or colon has to be escaped with at backslash.").fill_utf8(errorbuf);
+        (GraphemeString("in production ") + *atom_to_name[atom] + " char class expected after : or colon has to be escaped with at backslash.").fill_utf8(errorbuf);
         lex_error_position = pos;
         throw std::runtime_error((char*)errorbuf);
     }
@@ -1277,21 +1400,21 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
         if (priority > -1) priority = -1;
         bool neg = false;
         int r = nfas.size();
-        nfas.push_back(nfa(production_name));
+        nfas.push_back(nfa(atom));
         while (s[pos] != "" && s[pos]!="]") {
             if (s[pos] == "^") {
                 ++pos;
                 neg = true;
             }
-            if (!nfas[r].ProcessPossibleCharClass(s, pos, neg, production_name)) {
-                (GraphemeString("in production ") + production_name + " malformed range.").fill_utf8(errorbuf);
+            if (!nfas[r].ProcessPossibleCharClass(s, pos, neg, atom)) {
+                (GraphemeString("in production ") + *atom_to_name[atom] + " malformed range.").fill_utf8(errorbuf);
                 lex_error_position = pos;
                 throw std::runtime_error((char*)errorbuf);
 
             }
         }
         if (s[pos] == "") {
-            (GraphemeString("in production ") + production_name + " expected end of range.").fill_utf8(errorbuf);
+            (GraphemeString("in production ") + *atom_to_name[atom] + " expected end of range.").fill_utf8(errorbuf);
             lex_error_position = pos;
             throw std::runtime_error((char*)errorbuf);
         }
@@ -1302,13 +1425,13 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
         return false;
     }else if ( s[pos] == "]" || s[pos] == "}") {
 
-        (GraphemeString("in production ") + production_name + " character or character class expected.").fill_utf8(errorbuf);
+        (GraphemeString("in production ") + *atom_to_name[atom] + " character or character class expected.").fill_utf8(errorbuf);
         lex_error_position = pos;
         throw std::runtime_error((char*)errorbuf);
     }
 
     int r = nfas.size();
-    nfas.push_back(nfa(production_name));
+    nfas.push_back(nfa(atom));
     nfas[r].epsilon = false;
     report2("element matched %s for state %d\n", s[pos].str(),r);
     nfas[r].matches.insert(s[pos++]);
@@ -1320,12 +1443,12 @@ bool parse_element(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end
 }
 
 //parse * + or ?
-bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int &priority) 
+bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, Atom atom, int &priority) 
 {
     int se,ne;
     int pri = priority;
     
-    if (s[pos] != "" && parse_element(s, pos, se, ne, production_name,pri)) {
+    if (s[pos] != "" && parse_element(s, pos, se, ne, atom,pri)) {
         
         if (pri < priority) priority = pri;
         while (s[pos] == " ") ++pos;
@@ -1336,7 +1459,7 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
                 ++pos;
                 if (se == ne) {
                     int f = nfas.size();
-                    nfas.push_back(nfa(production_name));
+                    nfas.push_back(nfa(atom));
                     nfas[se].match_nfa = f;
                     nfas[se].no_match_nfa = f;
                     nfa_start_ret = se;
@@ -1345,9 +1468,9 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
                 }
             }
             int after = nfas.size();
-            nfas.push_back(nfa(production_name));
+            nfas.push_back(nfa(atom));
             int can_or = nfas.size();
-            nfas.push_back(nfa(production_name));
+            nfas.push_back(nfa(atom));
 
             nfas[can_or].match_nfa = se;
             nfas[se].or_nfa = after;
@@ -1362,7 +1485,7 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
                 ++pos;
                 if (se == ne) {
                     int f = nfas.size();
-                    nfas.push_back(nfa(production_name));
+                    nfas.push_back(nfa(atom));
                     nfas[se].match_nfa = se;
                     nfas[se].no_match_nfa = f;
                     nfa_start_ret = se;
@@ -1371,9 +1494,9 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
                 }
             }
             int loop = nfas.size();
-            nfas.push_back(nfa(production_name));
+            nfas.push_back(nfa(atom));
             int after = nfas.size();
-            nfas.push_back(nfa(production_name));
+            nfas.push_back(nfa(atom));
             nfas[after].or_nfa = se;
             nfas[loop].match_nfa = after;
             nfas[ne].match_nfa = loop;
@@ -1391,7 +1514,7 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
                     nfa temp(nfas[se]);
                     nfas.push_back(temp);
                     int f = nfas.size();
-                    nfas.push_back(nfa(production_name));
+                    nfas.push_back(nfa(atom));
                     nfas[se].match_nfa = d;
                     nfas[d].match_nfa = d;
                     nfas[d].no_match_nfa = f;
@@ -1401,7 +1524,7 @@ bool parse_post(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_re
                 }
             }
             int loop = nfas.size();
-            nfas.push_back(nfa(production_name));
+            nfas.push_back(nfa(atom));
             nfas[ne].match_nfa = loop;
             nfas[loop].or_nfa = se;
             nfa_start_ret = se;
@@ -1420,7 +1543,7 @@ doneit:
         if (s[pos] == "?" || s[pos] == "*" || s[pos] == "+") {
 
             uint8_t errorbuf[200];
-            (GraphemeString("in production ") + production_name + " can't chain post op operators.").fill_utf8(errorbuf);
+            (GraphemeString("in production ") + *atom_to_name[atom] + " can't chain post op operators.").fill_utf8(errorbuf);
             lex_error_position = pos;
             throw std::runtime_error((char*)errorbuf);
         }
@@ -1430,7 +1553,7 @@ doneit:
     else return false;
 }
 
-bool parse_concat(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, GraphemeString& production_name, int& priority)
+bool parse_concat(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret, Atom atom, int& priority)
 {
     int nep;
     bool first = true;
@@ -1440,7 +1563,7 @@ bool parse_concat(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
         int p = pos;
         int pri = priority;
 
-        if (s[p]!="" && parse_post(s, p, ns, ne, production_name, pri)) {
+        if (s[p]!="" && parse_post(s, p, ns, ne, atom, pri)) {
             
             if (pri < priority) priority = pri;
             pos = p;
@@ -1463,7 +1586,7 @@ bool parse_concat(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
 }
 
 //note, ending with a | makes and or to empty match the same as enclosing the or in a ()?
-bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  GraphemeString &production_name, int &priority)
+bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  Atom atom, int &priority)
 {
     
     //int p = pos;
@@ -1471,10 +1594,10 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
     int f = nfas.size();
 
 //    bool first = true;
-    nfas.push_back(nfa(production_name));
+    nfas.push_back(nfa(atom));
     
     int pri = priority;
-    if (s[pos] != "" && parse_concat(s, pos, ns, ne, production_name,pri)) {
+    if (s[pos] != "" && parse_concat(s, pos, ns, ne, atom,pri)) {
         
         if (pri < priority) priority = pri;
 //        int b = nfas.size();
@@ -1493,12 +1616,12 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
                 return true;
             }
 
-            report1("found | in %s\n",production_name.str());
+            report1("found | in %s\n",atom_to_name[atom]->str());
             ++pos;//past |
             int ns2, ne2;
             pri = priority;
 
-            if (s[pos] != "" && parse_concat(s, pos, ns2, ne2, production_name, pri)) {
+            if (s[pos] != "" && parse_concat(s, pos, ns2, ne2, atom, pri)) {
 
                 if (pri < priority) priority = pri;
 //                first = false;
@@ -1509,7 +1632,7 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
             }
             else {
                 uint8_t errorbuf[200];
-                (GraphemeString("in production ") + production_name + " alternate after | not found").fill_utf8(errorbuf);
+                (GraphemeString("in production ") + *atom_to_name[atom] + " alternate after | not found").fill_utf8(errorbuf);
                 lex_error_position = pos;
                 throw std::runtime_error((char*)errorbuf);
             }
@@ -1519,19 +1642,20 @@ bool parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_
     return false;
 }
 
-void lexer_generator::make_nfa(GraphemeString &name, GraphemeString &expression) {
+void lexer_generator::make_nfa( LLex l, GraphemeString &name, GraphemeString &expression) {
     //parse_reg_or(GraphemeString& s, int& pos, int& nfa_start_ret, int& nfa_end_ret,  GraphemeString &production_name)
     int pos = 0;
     int priority = 0;
     int nfa_start, nfa_end;
     
-    if (expression[pos]!= "" && parse_reg_or(expression, pos, nfa_start, nfa_end, name, priority))
+    if (expression[pos]!= "" && parse_reg_or(expression, pos, nfa_start, nfa_end, static_cast<Atom>(l), priority))
     {
         
         nfa_start_states.push_back(nfa_start);
         nfas[nfa_end].can_end = true;
         nfas[nfa_end].end_priority = priority;
-        name_to_nfa.insert(std::make_pair(name, nfa_start));
+        atom_to_nfa[(int)l] = nfa_start;
+        //name_to_nfa.insert(std::make_pair(name, nfa_start));
         
     }
     else {
@@ -1543,11 +1667,11 @@ void lexer_generator::make_nfa(GraphemeString &name, GraphemeString &expression)
     }
 }
 void lexer_generator::make_skip_nfa(GraphemeString &expression) {
-    GraphemeString name("skip");
+    //GraphemeString name("skip");
     int pos = 0;
     int priority = -2;
     int nfa_start, nfa_end;
-    if (parse_reg_or(expression, pos, nfa_start, nfa_end, name, priority))
+    if (parse_reg_or(expression, pos, nfa_start, nfa_end, static_cast<Atom>(LLex::skip), priority))
     {
         report1("*******skip nfa %d is possible end*****************", nfa_end);
         nfa_start_states.push_back(nfa_start);
@@ -1556,7 +1680,7 @@ void lexer_generator::make_skip_nfa(GraphemeString &expression) {
     }
     else {
         uint8_t errorbuf[200];
-        (GraphemeString("in production ") + name + " can't parse.").fill_utf8(errorbuf);
+        (GraphemeString("in production ") + *atom_to_name[static_cast<Atom>(LLex::skip)] + " can't parse.").fill_utf8(errorbuf);
         lex_error_position = pos;
         throw std::runtime_error((char*)errorbuf);
     }
@@ -1588,7 +1712,7 @@ std::string mainish(LPSTR source)
     //   b << nye << hindi << emojis << diacritics;
        //b << korean << zalgo;
     std::ostringstream t;
-
+    /*
     RootPtr< CollectableKeyHashTable<CollectableString, GraphemeString> > ckh = new CollectableKeyHashTable<CollectableString, GraphemeString>(GraphemeString(""));
     RootPtr< CollectableValueHashTable<GraphemeString, CollectableString> > cvh = new CollectableValueHashTable<GraphemeString, CollectableString>();
     RootPtr< CollectableHashTable<CollectableString, CollectableString> > ch = new CollectableHashTable<CollectableString, CollectableString>();
@@ -1753,6 +1877,7 @@ std::string mainish(LPSTR source)
     }
     if (s) t << "success!";
 done:;
+*/
     /*
         char* src = "a\r\nb";
 
@@ -1829,7 +1954,7 @@ done:;
                 t << "char '" << *a << "'\n";
             }
             */
-            //bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
+         //bool nfa_parse(GraphemeString* &found, GraphemeString& source, int& pos)
          /*   GraphemeString test("121 auto");
             t << " '123'.size() " << GraphemeString("123") <<" = " << GraphemeString("123").size() << " byte length " << GraphemeString("123").byte_length() << " codepoint length " << GraphemeString("123").codepoint_length() << '\n';
             GraphemeString t2("0123456789");
@@ -1840,20 +1965,21 @@ done:;
             t << "n " << (test[0]=="1"?"pass0 ":"fail0 ") << " r " << (test[1] == GraphemeString("2a")[0] ? "pass1 " : "fail1 ")  << " n "  << (test[2] == "1" ? "pass2 " : "fail2 ") <<
                 " s " << (test[3] == " " ? "pass3 " : "fail3 ") << " a " << (test[4] == "a" ? "pass4 " : "fail4 ") << "' \n";
         */
+    t << scan(source);
     return t.str();
 }
 std::string scan(LPSTR source)
 {
     GraphemeString b(source);
     std::ostringstream t;
-    GraphemeString* found;
+    Atom found;
     int pos = 0;
     int startpos = 0;
     ///*
     try {
         while (nfa_parse(found, b, pos, startpos)) {
-            t << *found << ": `" << b.slice(startpos, pos) << "`\n";
-            report2("***%s: `%s`****\n",found->str(), b.slice(startpos, pos).str());
+            t << *atom_to_name[found] << ": `" << b.slice(startpos, pos) << "`\n";
+            report2("***%s: `%s`****\n",atom_to_name[found]->str(), b.slice(startpos, pos).str());
             ++pos;
         }
     }
@@ -1915,15 +2041,108 @@ simple_type
     | 'continuation'
   
     ;        */
+
+
         LexerGen
-            .prod("IDENT", "[\\p{:word:}_][_\\p{:alnum:}]*+")
-            .prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
-            .prod("STRING", "\"(\\\\([^xu]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\]*+)*\"s?")
-            .prod("NUM_REAL", ":digit:++.:digit:*+([Ee][+\\-]?:digit:++)?|.:digit:++([Ee][+\\-]?:digit:++)?|:digit:++[Ee][+\\-]?:digit:++")
-            .prod("NUM_INT", ":digit:++|0x[:digit:a-fA-F]++|0b[01]++")
-            .prod("(","\\(")
-            .prod(")", "\\)")
-            .prod(".", ".")
+            .prod(LLex::IDENT,"IDENT", "[\\p{:word:}_][_\\p{:alnum:}]*+")
+
+            //.prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
+            .prod(LLex::dontcare,"dontcare", "_")
+            .prod(LLex::plus, "+","\\+")
+            .prod(LLex::minus, "-", "-")
+            .prod(LLex::mul, "*", "\\*")
+            .prod(LLex::div, "/", "/")
+            .prod(LLex::rem, "%", "%")
+            .prod(LLex::assign, "=", "=")
+            .prod(LLex::eq, "==", "==")
+            .prod(LLex::le, "<=", "<=")
+            .prod(LLex::ge, ">=", ">=")
+            .prod(LLex::gt, ">", ">")
+            .prod(LLex::lt, "<", "<")
+            .prod(LLex::shiftl, "<<", "<<")
+            .prod(LLex::shiftr, ">>", ">>")
+            .prod(LLex::ne, "!=","!=")
+            .prod(LLex::and, "and", "and")
+            .prod(LLex::or, "or", "or")
+            .prod(LLex::xor, "xor", "xor")
+            .prod(LLex::not, "not", "not")
+            .prod(LLex::band, "&", "&")
+            .prod(LLex::bor, "|", "\\|")
+            .prod(LLex::bxor, "^", "^")
+            .prod(LLex::bnot, "~", "~")
+            .prod(LLex::visible, "visible","visible")
+            .prod(LLex::atomic, "atomic", "atomic")
+            .prod(LLex::ordered, "ordered", "ordered")
+            .prod(LLex::relaxed, "relaxed", "relaxed")
+            .prod(LLex::sequential, "sequential", "sequential")
+            .prod(LLex::thread, "thread", "thread")
+            .prod(LLex::join, "join", "join")
+            .prod(LLex::visible_lifo, "visible-lifo", "visible-lifo")
+            .prod(LLex::mutex, "mutex", "mutex")
+            .prod(LLex::rwmutex, "rwmutex", "rwmutex")
+            .prod(LLex::event, "event", "event")
+            .prod(LLex::hold, "hold", "hold")
+            .prod(LLex::read_hold, "read-hold", "read-hold")
+            .prod(LLex::modify_hold, "modify-hold", "modify-hold")
+            .prod(LLex::i32, "i32", "i32")
+            .prod(LLex::u32, "u32", "u32")
+            .prod(LLex::i64, "i64", "i64")
+            .prod(LLex::u64, "u64", "u64")
+            .prod(LLex::i16, "i16", "i16")
+            .prod(LLex::u16, "u16", "u16")
+            .prod(LLex::i8, "i8", "i8")
+            .prod(LLex::u8, "u8", "u8")
+            .prod(LLex::string, "string","string")
+            .prod(LLex::float_, "float", "float")
+            .prod(LLex::double_, "double", "double")
+            .prod(LLex::any, "any","any")
+            .prod(LLex::const_, "const", "const")
+            .prod(LLex::let, "let", "let")
+            .prod(LLex::define, "define", "define")
+            .prod(LLex::break_, "break", "break")
+            .prod(LLex::let_loop, "let-loop", "let-loop")
+            .prod(LLex::while_, "while", "while")
+            .prod(LLex::until_, "until", "until")
+            .prod(LLex::continue_, "continue","continue")
+            .prod(LLex::cond, "cond", "cond")
+            .prod(LLex::lambda, "lambda", "lambda")
+            .prod(LLex::call_cc, "call-cc","call-cc")
+            .prod(LLex::continuation, "continuation","continuation")
+            .prod(LLex::continuable, "continuable", "continuable")
+            .prod(LLex::search, "search","search")
+            .prod(LLex::fail, "fail","fail")
+            .prod(LLex::yes, "yes","yes")
+            .prod(LLex::no, "no","no")
+            .prod(LLex::cut, "cut","cut")
+            .prod(LLex::amb, "amb","amb")
+            .prod(LLex::constructor, "constructor","constructor")
+            .prod(LLex::destructor, "destructor", "destructor")
+            .prod(LLex::on_unwind, "on-unwind", "on-unwind")
+            .prod(LLex::on_wind, "on-wind", "on-wind")
+            .prod(LLex::finalize, "finalize", "finalize")
+            .prod(LLex::impl, "impl", "impl")
+            .prod(LLex::switch_, "switch","switch")
+            .prod(LLex::inline_, "inline","inline")
+            .prod(LLex::float_intrinsic, "float-intrisic", "sin|cos|asin|acos|exp|ln|10x|log10|log2|2^x|sqrt|tan|atan|10^x")
+            .prod(LLex::tuple, "tuple", "tuple")
+            .prod(LLex::struct_, "struct", "struct")
+            .prod(LLex::alg, "alg","alg")
+            .prod(LLex::ref, "ref","ref")
+            .prod(LLex::array, "array", "array")
+            .prod(LLex::cast, "cast","cast")
+            .prod(LLex::ptr, "ptr","ptr")
+            .prod(LLex::vector, "vector","vector")
+            .prod(LLex::return_, "return", "return")
+            .prod(LLex::co_return_, "co-return","co-return")
+            .prod(LLex::return_from, "return-from", "return-from")
+            .prod(LLex::call, "call","call")
+            .prod(LLex::string, "STRING", "\"(\\\\([^xu]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\]*+)*\"s?")
+            .prod(LLex::real, "NUM_REAL", ":digit:++.:digit:*+([Ee][+\\-]?:digit:++)?|.:digit:++([Ee][+\\-]?:digit:++)?|:digit:++[Ee][+\\-]?:digit:++")
+            .prod(LLex::int_, "NUM_INT", ":digit:++|0x[:digit:a-fA-F]++|0b[01]++")
+            .prod(LLex::lp, "(","\\(")
+            .prod(LLex::rp, ")", "\\)")
+            .prod(LLex::dot_call, ".call", ".call")
+            .prod(LLex::dot, ".", ".")
 
             .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
         .skip("//[^\\n\\r]*+[\\r\\n]")

@@ -226,11 +226,16 @@ int cat_set_count(debug_cat_set& s, debug_cat_set& n)
 
  Atom intern(GraphemeString a)
  {
+     report1("interning string '%s'\n", a.str());
 //     std::lock_guard<std::mutex> one_at_a_time(intern_mutex);
      auto f = name_to_atom.find(a);
-     if (f != name_to_atom.end()) return f->second;
+     if (f != name_to_atom.end()) {
+         report1("already interned as %d\n", f->second);
+         return f->second;
+     }
      Atom ret = atom_to_name.size();
-     atom_to_name.push_back(&a.deep_copy());
+	 report1("interned as %d\n", ret);
+     atom_to_name.push_back(new GraphemeString(a.deep_copy()));
      name_to_atom.insert(std::make_pair(a, ret));
      return ret;
  }
@@ -1914,13 +1919,13 @@ ReadState ReadItem(RootPtr<Sexp>& item, GraphemeString &b, int &pos, int &startp
             break;
         case (Atom)LLex::int_:
             if (b.slice(startpos, pos).str()[0] == '-') {
-                sscanf(b.slice(startpos, pos).str(), SCNd64, &gen_int);
+                sscanf(b.slice(startpos, pos).str(),"%" SCNd64, &gen_int);
                 item = new SexpInt(gen_int);
             }
             else {
-                int n=sscanf(b.slice(startpos, pos).str(), SCNd64, &gen_int);
-                sscanf(b.slice(startpos, pos).str(), SCNu64, &gen_uint);
-                if (n == 0 || n == EOF || (gen_uint & 0x8000000000000000) != 0) {
+                int n=sscanf(b.slice(startpos, pos).str(),"%" SCNd64, &gen_int);
+                int m = sscanf(b.slice(startpos, pos).str(),"%" SCNu64, &gen_uint);
+                if (n == 0 || n == EOF || (m!=0 && (gen_uint & 0x8000000000000000) != 0)) {
                     item = new SexpUInt(gen_uint);
                 } else item = new SexpInt(gen_int);
             }
@@ -1987,6 +1992,8 @@ std::string LispPrint(RootPtr<Sexp> l)
             break;
         case SexpType::atom_:
             if (in_list) t << "\\ ";
+            report1("uninterning atom %d\n", static_pointer_cast<SexpAtom>(l)->value);
+            report1("as %s\n", atom_to_name[static_pointer_cast<SexpAtom>(l)->value]->str());
             t << *atom_to_name[static_pointer_cast<SexpAtom>(l)->value] << ' ';
             l = SNil;
             break;
@@ -1994,6 +2001,7 @@ std::string LispPrint(RootPtr<Sexp> l)
         case SexpType::cons_:
             in_list=true;
             t << LispPrint(static_pointer_cast<SexpCons>(l)->car) << ' ';
+            l = static_pointer_cast<SexpCons>(l)->cdr;
         }
     } while (l->type() != SexpType::nil_);
     return t.str();

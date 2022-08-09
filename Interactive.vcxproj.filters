@@ -75,6 +75,12 @@
     <ClInclude Include="CollectableHash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lispish.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Interactive.cpp">
@@ -132,6 +138,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lispish.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

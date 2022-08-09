@@ -226,8 +226,10 @@
     <ClInclude Include="Interactive.h" />
     <ClInclude Include="InteractiveDoc.h" />
     <ClInclude Include="InteractiveView.h" />
+    <ClInclude Include="Lispish.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="OutputWnd.h" />
+    <ClInclude Include="parser.h" />
     <ClInclude Include="pevents\pevents.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="spooky.h" />
@@ -247,6 +249,7 @@
     <ClCompile Include="Interactive.cpp" />
     <ClCompile Include="InteractiveDoc.cpp" />
     <ClCompile Include="InteractiveView.cpp" />
+    <ClCompile Include="lispish.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="oldparser.cpp" />
     <ClCompile Include="OutputWnd.cpp" />

@@ -38,6 +38,9 @@
 #define report5(f,a,b,c,d,e) _RPTF5(_CRT_WARN, f,a,b,c,d,e)
 #define report6(f,a,b,c,d,e,g) _RPTF6(_CRT_WARN, f,a,b,c,d,e,g)
 
+
+
+
 #ifdef NO_NO_NO
 namespace llvm {
     namespace orc {
@@ -145,28 +148,28 @@ namespace llvm {
 #include <cstdlib>
 #include <map>
 
-#include "grapheme.h"
+
+#include "parser.h"
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-//#define DEBUGSETS
+#include "lispish.h"
+#define DEBUGSETS
+//There seems to be a bug in std::unordered_set 
 #ifdef DEBUGSETS
 class debug_set {
-    std::vector<GraphemeString> collection;
+    RootPtr<HashTable<GraphemeString,bool>> collection;
 public:
-    GraphemeString& operator[](int i) { return collection[i];  }
+    debug_set() :collection(new HashTable<GraphemeString,bool>(false,32)) {}
+
+    //GraphemeString& operator[](int i) { return collection[i];  }
     void insert(GraphemeString& o) { 
-        for (int i = (int)size() - 1; i >= 0; --i) if (collection[i] == o) return;
-        collection.push_back(o); 
+        collection->insert_or_assign(o, true);
     }
-    size_t size() const { return collection.size(); }
-    auto cbegin() { return collection.cbegin(); }
-    auto cend() {
-        return collection.cend();
-    }
+    size_t size() const { return collection->size(); }
     int count(GraphemeString& o)
     {
-        for (int i = (int)collection.size() - 1; i >= 0; --i) if (collection[i] == o) return 1;
+        if (collection->contains(o)) return 1;
         return 0;
     }
 
@@ -175,7 +178,7 @@ class debug_cat_set
 {
     std::vector<utf8proc_category_t> collection;
 public:
-    utf8proc_category_t& operator[](int i) { return collection[i]; }
+    //utf8proc_category_t& operator[](int i) { return collection[i]; }
     void insert(utf8proc_category_t o) {
         for (int i = (int)size() - 1; i >= 0; --i) if (collection[i] == o) return;
         collection.push_back(o); 
@@ -214,110 +217,23 @@ int cat_set_count(debug_cat_set& s, debug_cat_set& n)
 #ifdef NOOOOO
 
 #else
-typedef int32_t Atom;
 
- enum class LLex {
-    IDENT,
-    dontcare,
-    plus,
-    minus,
-    mul,
-    div,
-    rem,
-    assign,
-    eq,
-    le,
-    ge,
-    gt,
-    lt,
-    shiftl,
-    shiftr,
-    ne,
-    and,
-    or ,
-    xor,
-    not,
-    band,
-    bor,
-    bxor,
-    bnot,
-    visible,
-    atomic,
-    ordered,
-    relaxed,
-    sequential,
-    thread,
-    join,
-    visible_lifo,
-    mutex,
-    rwmutex,
-    event,
-    hold,
-    read_hold,
-    modify_hold,
-    i32,
-    u32,
-    i64,
-    u64,
-    i16,
-    u16,
-    i8,
-    u8,
-    string,
-    float_,
-    double_,
-    any,
-    const_,
-    let,
-    define,
-    break_,
-    let_loop,
-    while_,
-    until_,
-    continue_,
-    cond,
-    lambda,
-    call_cc,
-    continuation,
-    continuable,
-    search,
-    fail,
-    yes,
-    no,
-    cut,
-    amb,
-    constructor,
-    destructor,
-    on_unwind,
-    on_wind,
-    finalize,
-    impl,
-    switch_,
-    inline_,
-    float_intrinsic,
-    tuple,
-    struct_,
-    alg,
-    ref,
-    array,
-    cast,
-    ptr,
-    vector,
-    return_,
-    co_return_,
-    return_from,
-    call,
-    real,
-    int_,
-    lp,
-    rp,
-    dot_call,
-    dot,
-    skip,
-    NUMBER_OF_TOKENS
-};
+ //if I want to make this really threadsafe eventually, replace atom_to_name with something like CollectableInlineVector and put a mutex over all access to name_to_atom
  std::unordered_map < GraphemeString, Atom> name_to_atom;
  std::vector <GraphemeString*> atom_to_name((int)LLex::NUMBER_OF_TOKENS, nullptr);
+
+ //std::mutex intern_mutex;
+
+ Atom intern(GraphemeString a)
+ {
+//     std::lock_guard<std::mutex> one_at_a_time(intern_mutex);
+     auto f = name_to_atom.find(a);
+     if (f != name_to_atom.end()) return f->second;
+     Atom ret = atom_to_name.size();
+     atom_to_name.push_back(&a.deep_copy());
+     name_to_atom.insert(std::make_pair(a, ret));
+     return ret;
+ }
 
 class lexer_generator
 {
@@ -1685,7 +1601,6 @@ void lexer_generator::make_skip_nfa(GraphemeString &expression) {
         throw std::runtime_error((char*)errorbuf);
     }
 }
-#include "CollectableHash.h"
 
 RootPtr<CollectableString> int_to_collectable_string(int a)
 {
@@ -1706,7 +1621,7 @@ std::string scan(LPSTR source);
 
 std::string mainish(LPSTR source)
 {
-    GraphemeString b(source);
+    //GraphemeString b(source);
     //   GraphemeStringBuilder b;
 
     //   b << nye << hindi << emojis << diacritics;
@@ -1968,29 +1883,251 @@ done:;
     t << scan(source);
     return t.str();
 }
-std::string scan(LPSTR source)
+
+enum class ReadState {
+    ReadItem,
+    NewList,
+    EndList,
+    LexError,
+    Dot,
+    EndStream
+};
+#include <inttypes.h>
+ReadState ReadItem(RootPtr<Sexp>& item, GraphemeString &b, int &pos, int &startpos)
 {
-    GraphemeString b(source);
-    std::ostringstream t;
     Atom found;
-    int pos = 0;
-    int startpos = 0;
-    ///*
-    try {
-        while (nfa_parse(found, b, pos, startpos)) {
-            t << *atom_to_name[found] << ": `" << b.slice(startpos, pos) << "`\n";
-            report2("***%s: `%s`****\n",atom_to_name[found]->str(), b.slice(startpos, pos).str());
+    Atom gen_atom;
+    int64_t gen_int;
+    uint64_t gen_uint;
+
+    double gen_real;
+    if (nfa_parse(found, b, pos, startpos)) {
+        switch (found) {
+        case (Atom)LLex::IDENT:
+            gen_atom = intern(b.slice(startpos, pos));
             ++pos;
+            item = new SexpAtom(gen_atom);
+            break;
+        case (Atom)LLex::string:
+            item = new SexpString(b.slice(startpos, pos).deep_copy());
+            ++pos;
+            break;
+        case (Atom)LLex::int_:
+            if (b.slice(startpos, pos).str()[0] == '-') {
+                sscanf(b.slice(startpos, pos).str(), SCNd64, &gen_int);
+                item = new SexpInt(gen_int);
+            }
+            else {
+                int n=sscanf(b.slice(startpos, pos).str(), SCNd64, &gen_int);
+                sscanf(b.slice(startpos, pos).str(), SCNu64, &gen_uint);
+                if (n == 0 || n == EOF || (gen_uint & 0x8000000000000000) != 0) {
+                    item = new SexpUInt(gen_uint);
+                } else item = new SexpInt(gen_int);
+            }
+            ++pos;
+            break;
+        case (Atom)LLex::real:
+            sscanf(b.slice(startpos, pos).str(), "%f", &gen_real);
+            item = new SexpDouble(gen_real);
+            ++pos;
+            break;
+        case (Atom)LLex::lp:
+            ++pos;
+            return ReadState::NewList;
+        case (Atom)LLex::rp:
+            ++pos;
+            return ReadState::EndList;
+        case (Atom)LLex::dot_pair:
+            ++pos;
+            return ReadState::Dot;
+        default:
+            ++pos;
+            item = new SexpAtom(found);
         }
+        return ReadState::ReadItem;
     }
-    catch (std::runtime_error err)
-    {
-        t << err.what()<<'\n';
+    if (pos < b.size()-1) {
+        return ReadState::LexError;
     }
-    //*/
+    return ReadState::EndStream;
+}
+
+std::string LispPrint(RootPtr<Sexp> l)
+{
+    bool in_list = false;
+    std::ostringstream t;
+    do {
+        switch (l->type())
+        {
+        case SexpType::nil_:
+            if (!in_list) {
+                t << "()";
+            }
+            else t << ")";
+            break;
+        case SexpType::string_:
+            if (in_list) t << "\\ ";
+            t << static_pointer_cast<SexpString>(l)->value << ' ';
+            l = SNil;
+            break;
+        case SexpType::int_:
+            if (in_list) t << "\\ ";
+            t << static_pointer_cast<SexpInt>(l)->value << ' ';
+            l = SNil;
+            break;
+        case SexpType::uint_:
+            if (in_list) t << "\\ ";
+            t << static_pointer_cast<SexpUInt>(l)->value << ' ';
+            l = SNil;
+            break;
+        case SexpType::double_:
+            if (in_list) t << "\\ ";
+            t << static_pointer_cast<SexpDouble>(l)->value << ' ';
+            l = SNil;
+            break;
+        case SexpType::atom_:
+            if (in_list) t << "\\ ";
+            t << *atom_to_name[static_pointer_cast<SexpAtom>(l)->value] << ' ';
+            l = SNil;
+            break;
+
+        case SexpType::cons_:
+            in_list=true;
+            t << LispPrint(static_pointer_cast<SexpCons>(l)->car) << ' ';
+        }
+    } while (l->type() != SexpType::nil_);
     return t.str();
 }
 
+//return is list of top level
+//is not single read
+enum class LispReadState {
+    SingleRead,
+    ListOfTopLevel,
+    LexError,
+    GrammarError,
+    AllWhiteSpace,
+};
+
+enum class ReadDotState {
+    NoDot,
+    ReadDot,
+    ExpectingRP
+};
+LispReadState LispRead(GraphemeString b, int& pos, RootPtr<Sexp>& ret, bool reading_list=false)
+{
+    int startpos = pos;
+    RootPtr<Sexp> item;
+    RootPtr<Sexp> head = SNil;
+    RootPtr<Sexp> so_far = SNil;
+    bool top_level = !reading_list;
+    ReadDotState dot_state = ReadDotState::NoDot;
+
+    auto append_element = [&]() {
+        if (so_far->type() == SexpType::nil_) {
+            so_far = new SexpCons(item);
+            head = so_far;
+        }
+        else {
+            reading_list = true;
+            if (dot_state == ReadDotState::ReadDot) {
+                static_pointer_cast<SexpCons>(so_far)->cdr = item;
+                dot_state = ReadDotState::ExpectingRP;
+            }
+            else {
+                RootPtr<Sexp> temp = new SexpCons(item);
+                static_pointer_cast<SexpCons>(so_far)->cdr = temp;
+                so_far = temp;
+            }
+        }
+    };
+
+    for (;;) {
+        switch (ReadItem(item, b, pos, startpos)) {
+        case ReadState::ReadItem:
+            if (dot_state == ReadDotState::ExpectingRP) return LispReadState::GrammarError;
+            append_element();
+            break;
+        case ReadState::NewList:
+        if (dot_state == ReadDotState::ExpectingRP) return LispReadState::GrammarError;
+        {
+            auto s = LispRead(b, pos, item, true);
+            switch (s)
+            {
+            case LispReadState::SingleRead:
+                append_element();
+                ret = head;
+            case LispReadState::LexError:
+            case LispReadState::GrammarError:
+                return s;
+            default:
+                throw std::logic_error("we shouldn't get here");
+            }
+        }
+        case ReadState::Dot:
+            if (dot_state == ReadDotState::ExpectingRP) return LispReadState::GrammarError;
+            if (top_level || so_far->type() == SexpType::nil_) return LispReadState::GrammarError;
+            dot_state = ReadDotState::ReadDot;
+            break;
+        case ReadState::EndList:
+            if (top_level || dot_state == ReadDotState::ReadDot) return LispReadState::GrammarError;
+            ret = head;
+            return LispReadState::SingleRead;
+        case ReadState::LexError:
+            return LispReadState::LexError;
+        case ReadState::EndStream:
+            if (top_level) {
+                if (so_far->type() == SexpType::nil_) return LispReadState::AllWhiteSpace;
+                if (reading_list) {
+                    ret = head;
+                    return LispReadState::ListOfTopLevel;
+                }
+                else ret = static_pointer_cast<SexpCons>(so_far)->car;
+                return LispReadState::SingleRead;
+            }
+            return LispReadState::GrammarError;
+        }
+    }
+}
+
+std::string scan(LPSTR source)
+{
+    std::ostringstream t;
+    GraphemeString b(source);
+    RootPtr<Sexp> read;
+    int pos = 0;
+    ///*
+    try {
+        LispReadState r = LispRead(b, pos, read);
+        switch (r)
+        {
+        case LispReadState::AllWhiteSpace:
+            t << "Nothing to read \n";
+            break;
+        case LispReadState::GrammarError:
+            t << "Grammar error \n";
+            break;
+        case LispReadState::LexError:
+            t << "Lexical error \n";
+            break;
+        case LispReadState::SingleRead:
+            t << LispPrint(read) << '\n';
+            break;
+        case LispReadState::ListOfTopLevel:
+            do {
+                t << LispPrint(static_pointer_cast<SexpCons>(read)->car) << '\n';
+                read = static_pointer_cast<SexpCons>(read)->cdr;
+            } while (read->type()!=SexpType::nil_);
+        }
+    }
+      catch (std::runtime_error err)
+    {
+        t << err.what() << '\n';
+    }
+    //*/
+    return t.str();
+
+}
 extern COutputWnd* output_window;
 void init_parser()
 {
@@ -2136,14 +2273,14 @@ simple_type
             .prod(LLex::co_return_, "co-return","co-return")
             .prod(LLex::return_from, "return-from", "return-from")
             .prod(LLex::call, "call","call")
-            .prod(LLex::string, "STRING", "\"(\\\\([^xu]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\]*+)*\"s?")
-            .prod(LLex::real, "NUM_REAL", ":digit:++.:digit:*+([Ee][+\\-]?:digit:++)?|.:digit:++([Ee][+\\-]?:digit:++)?|:digit:++[Ee][+\\-]?:digit:++")
-            .prod(LLex::int_, "NUM_INT", ":digit:++|0x[:digit:a-fA-F]++|0b[01]++")
+            .prod(LLex::string, "STRING", "\"(\\\\([^xu]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\])*\"s?")
+            .prod(LLex::real, "NUM_REAL", "-?:digit:++.:digit:*+([Ee][+\\-]?:digit:++)?|.:digit:++([Ee][+\\-]?:digit:++)?|:digit:++[Ee][+\\-]?:digit:++")
+            .prod(LLex::int_, "NUM_INT", "-?:digit:++|0x[:digit:a-fA-F]++|0b[01]++")
             .prod(LLex::lp, "(","\\(")
             .prod(LLex::rp, ")", "\\)")
             .prod(LLex::dot_call, ".call", ".call")
             .prod(LLex::dot, ".", ".")
-
+            .prod(LLex::dot_pair, "\\", "\\\\")
             .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
         .skip("//[^\\n\\r]*+[\\r\\n]")
         .skip("[\\p{:space:}]++")

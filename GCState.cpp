@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Collectable.h"
+#include "Lispish.h"
 #include <cassert>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN 
@@ -648,6 +649,13 @@ namespace GC {
 
         NotMutatingCount = 1;
         thread_enter_mutation(true);
+
+        static bool SNilInit = false;
+        if (!SNilInit) {
+            SNilInit = true;
+            _SNil_ = new RootPtr<Sexp>;
+            SNil = new SexpNil;
+        }
     }
 
     void FreeThreadHandles();

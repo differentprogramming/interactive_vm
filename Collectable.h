@@ -145,26 +145,26 @@ public:
 };
 
 template< class T, class U >
-InstancePtr<T> static_pointer_cast(const InstancePtr<U>& v) noexcept
+RootPtr<T> static_pointer_cast(const InstancePtr<U>& v) noexcept
 {
-    return InstancePtr<T>(static_cast<T*>(v.get()));
+    return RootPtr<T>(static_cast<T*>(v.get()));
 }
 
 template< class T, class U >
-InstancePtr<T> const_pointer_cast(const InstancePtr<U>& v) noexcept
+RootPtr<T> const_pointer_cast(const InstancePtr<U>& v) noexcept
 {
-    return InstancePtr<T>(const_cast<T*>(v.get()));
+    return RootPtr<T>(const_cast<T*>(v.get()));
 }
 template< class T, class U >
-InstancePtr<T> dynamic_pointer_cast(const InstancePtr<U>& v) noexcept
+RootPtr<T> dynamic_pointer_cast(const InstancePtr<U>& v) noexcept
 {
-    return InstancePtr<T>(dynamic_cast<T*>(v.get()));
+    return RootPtr<T>(dynamic_cast<T*>(v.get()));
 }
 
 template< class T, class U >
-InstancePtr<T> reinterpret_pointer_cast(const InstancePtr<U>& v) noexcept
+RootPtr<T> reinterpret_pointer_cast(const InstancePtr<U>& v) noexcept
 {
-    return InstancePtr<T>(reinterpret_cast<T*>(v.get()));
+    return RootPtr<T>(reinterpret_cast<T*>(v.get()));
 }
 
 class Collectable;

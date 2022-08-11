@@ -235,8 +235,9 @@ int cat_set_count(debug_cat_set& s, debug_cat_set& n)
      }
      Atom ret = atom_to_name.size();
 	 report1("interned as %d\n", ret);
-     atom_to_name.push_back(new GraphemeString(a.deep_copy()));
-     name_to_atom.insert(std::make_pair(a, ret));
+     GraphemeString d = a.deep_copy();//truncated, no longer a slice into the source code
+     atom_to_name.push_back(new GraphemeString(d));//a pointer because GraphemeString isn't assignable
+     name_to_atom.insert(std::make_pair(d, ret));
      return ret;
  }
 
@@ -1932,7 +1933,7 @@ ReadState ReadItem(RootPtr<Sexp>& item, GraphemeString &b, int &pos, int &startp
             ++pos;
             break;
         case (Atom)LLex::real:
-            sscanf(b.slice(startpos, pos).str(), "%f", &gen_real);
+            sscanf(b.slice(startpos, pos).str(), "%lf", &gen_real);
             item = new SexpDouble(gen_real);
             ++pos;
             break;
@@ -1965,33 +1966,30 @@ std::string LispPrint(RootPtr<Sexp> l)
         switch (l->type())
         {
         case SexpType::nil_:
-            if (!in_list) {
-                t << "()";
-            }
-            else t << ")";
+            t << "()";
             break;
         case SexpType::string_:
-            if (in_list) t << "\\ ";
-            t << static_pointer_cast<SexpString>(l)->value << ' ';
+            if (in_list) t << " \\ ";
+            t << static_pointer_cast<SexpString>(l)->value;
             l = SNil;
             break;
         case SexpType::int_:
-            if (in_list) t << "\\ ";
-            t << static_pointer_cast<SexpInt>(l)->value << ' ';
+            if (in_list) t << " \\ ";
+            t << static_pointer_cast<SexpInt>(l)->value;
             l = SNil;
             break;
         case SexpType::uint_:
-            if (in_list) t << "\\ ";
-            t << static_pointer_cast<SexpUInt>(l)->value << ' ';
+            if (in_list) t << " \\ ";
+            t << static_pointer_cast<SexpUInt>(l)->value;
             l = SNil;
             break;
         case SexpType::double_:
-            if (in_list) t << "\\ ";
-            t << static_pointer_cast<SexpDouble>(l)->value << ' ';
+            if (in_list) t << " \\ ";
+            t << static_pointer_cast<SexpDouble>(l)->value;
             l = SNil;
             break;
         case SexpType::atom_:
-            if (in_list) t << "\\ ";
+            if (in_list) t << " \\ ";
             report1("uninterning atom %d\n", static_pointer_cast<SexpAtom>(l)->value);
             report1("as %s\n", atom_to_name[static_pointer_cast<SexpAtom>(l)->value]->str());
             t << *atom_to_name[static_pointer_cast<SexpAtom>(l)->value] << ' ';
@@ -1999,11 +1997,14 @@ std::string LispPrint(RootPtr<Sexp> l)
             break;
 
         case SexpType::cons_:
+            if (!in_list) t << '(';
+            else t << ' ';
             in_list=true;
-            t << LispPrint(static_pointer_cast<SexpCons>(l)->car) << ' ';
+            t << LispPrint(static_pointer_cast<SexpCons>(l)->car);
             l = static_pointer_cast<SexpCons>(l)->cdr;
         }
     } while (l->type() != SexpType::nil_);
+	if (in_list) t << ')';
     return t.str();
 }
 
@@ -2064,13 +2065,14 @@ LispReadState LispRead(GraphemeString b, int& pos, RootPtr<Sexp>& ret, bool read
             {
             case LispReadState::SingleRead:
                 append_element();
-                ret = head;
+                break;
             case LispReadState::LexError:
             case LispReadState::GrammarError:
                 return s;
             default:
                 throw std::logic_error("we shouldn't get here");
             }
+            break;
         }
         case ReadState::Dot:
             if (dot_state == ReadDotState::ExpectingRP) return LispReadState::GrammarError;

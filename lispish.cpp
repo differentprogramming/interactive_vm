@@ -26,6 +26,7 @@ RootPtr<Sexp> deep_copy(RootPtr<Sexp> a)
 	}
 	return a;
 }
+
 RootPtr<SexpCons> append(RootPtr<SexpCons> a, RootPtr<Sexp> b)
 {
 	if (a->cdr->type() != SexpType::cons_) return new SexpCons(a->car, b);

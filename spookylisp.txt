@@ -11,7 +11,7 @@
 
 (struct spooky_state
 	(m_data (array u64 (* 2 SC_NUMVARS)))
-	(m_state (array u64 SC_NUMVARS)))
+	(m_state (array u64 SC_NUMVARS))
 	(m_length u64)
 	(m_remainder i8)
 )
@@ -22,13 +22,9 @@
 	(return (call spooky_hash (.call a str) str_len (^ (cast u64 strlen) seed)))
 )
 
-inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
-	size_t str_len = strlen(a);
-	return spooky_hash64((void *)a, str_len, (uint64_t)str_len ^ seed);
-}
 (define hash_string_with_seed ((a const (ptr i8)) (seed u64)) u64 inline
 	(let str_len u64 (.call a size))
-	(return (call spooky_hash64 a str_len (^ (cast u64 strlen) seed)))
+	(return (call spooky_hash64 (cast a (ptr ())) str_len (^ (cast u64 strlen) seed)))
 )
 
 
@@ -59,7 +55,6 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 //  * is odd
 //  * is a not-very-regular mix of 1's and 0's
 //  * does not need any other special mathematical properties
-#define SC_CONST 0xdeadbeefdeadbeefLL
 
 (const SC_CONST u64 0xdeadbeefdeadbeef)
 
@@ -85,7 +80,7 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 //   Where "differ" means xor or subtraction
 //   And the base value is random
 //   When run forward or backwards one Mix
-// I tried 3 pairs of each; they all differed by at least 212 bits.
+// I tried 3 pairs of each// they all differed by at least 212 bits.
 //
 
 (define mix ((data const (ptr u64)) 
@@ -163,9 +158,6 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 	(set (deref s10) (+ (deref s10) (deref s0)))
 )
 	
-	
-	
-)
 //
 // Mix all 12 inputs together so that h0, h1 are a hash of them all.
 //
@@ -354,9 +346,8 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 // but it's used by Spooky just for short messages.
 //               
 
-) 
+
 (define spooky_shorthash ((message const (ptr ()) (length u64) (hash2 (ptr u64)) (hash2 (ptr u64))) ()
-(
    (let (buf (array u64 (* 2 SC_NUMVARS))))
    (let u (union (p8 const (ptr u8))(p32 (ptr u32))(p64 (ptr u64))(i u64)))
 
@@ -377,22 +368,24 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 	(set d SC_CONST)
 
 	(cond ((> length 15)
-		(let endp const (ptr u64) (+ (. u p64) (* (/ length 32) 4)))
-		(for () (< (. u p64) endp) (set (. u p64) (+ (. u p64) 4))
-			(set c (+ c (deref (. u p64))))
-			(set d (+ d (deref (. u p64 ) 1)))
-			(call short_mix (get-addr a) (get-addr b) (get-addr c) (get-addr d))
-			(set a (+ a (deref (. u p64) 2)))
-			(set b (+ b (deref (. u p64) 3)))
-		)
-		(cond ((> remainder 16)
-			(set c (+ c (deref (. u p64) 0)))
-			(set d (+ d (deref (. u p64) 1)))
-			(call short_mix (get-addr a) (get-addr b) (get-addr c) (get-addr d))
-			(set (. u p64) (+ (. u p64) 2))
-			(set remainder (- remainder 16))
-		)
-	)		
+	    	(let endp const (ptr u64) (+ (. u p64) (* (/ length 32) 4)))
+		    (for () (< (. u p64) endp) (set (. u p64) (+ (. u p64) 4))
+			    (set c (+ c (deref (. u p64))))
+    			(set d (+ d (deref (. u p64 ) 1)))
+	    		(call short_mix (get-addr a) (get-addr b) (get-addr c) (get-addr d))
+		    	(set a (+ a (deref (. u p64) 2)))
+			    (set b (+ b (deref (. u p64) 3)))
+		    )
+		    (cond ((> remainder 16)
+			    (set c (+ c (deref (. u p64) 0)))
+			    (set d (+ d (deref (. u p64) 1)))
+			    (call short_mix (get-addr a) (get-addr b) (get-addr c) (get-addr d))
+			    (set (. u p64) (+ (. u p64) 2))
+			    (set remainder (- remainder 16))
+		        )
+		    )
+	    )
+	)
 	
 	
     // Handle the last 0..15 bytes, and its length
@@ -447,114 +440,61 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 )
 
 // add a message fragment to the state
-void spooky_update (  
-    struct spooky_state *state,
-    const void *message,
-    size_t length
-) 
-
 (define spooky_update ((state (ptr spooky_state)) (message const (ptr ())) (length u64)) ()
 
-    uint64_t h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11;
-	(let h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11)
+	(let h0 u64) (let h1 u64) (let h2 u64) (let h3 u64) (let h4 u64) (let h5 u64) (let h6 u64) (let h7 u64) (let h8 u64) (let h9 u64) (let h10 u64) (let h11 u64)
 	
-    size_t newLength = length + state->m_remainder;
-	(let newLength u64 (+ length (-> state m_remainder))
+	(let newLength u64 (+ length (-> state m_remainder)))
 	
-    uint8_t remainder;  
 	(let remainder u8)
 	
-    union {
-        const uint8_t *p8;
-        uint64_t *p64;
-        size_t i;
-    } u;
 	(let u (union (p8 const (ptr u8))(p64 (ptr u64))(i u64)))
 	
-    const uint64_t *endp;
 	(let endp const (ptr u64))
 
     // Is this message fragment too short?  If it is, stuff it away.
-    if (newLength < SC_BUFSIZE)	{
-        memcpy(&((uint8_t *)state->m_data)[state->m_remainder], 
-               message, length);
-        state->m_length = length + state->m_length;
-        state->m_remainder = (uint8_t)newLength;
-        return;
-    }
 	(cond ((> newLength SC_BUFSIZE)
-	       (call memcpy (get-addr (deref (cast (ptr u8)(-> state m_data)) (-> state m_remainder))) message length)
-		(set (-> state m_length) (+ length (-> state m_length)))
-		(set (-> state m_remainder) (cast u8 newLength))
-		(return)
+	        (call memcpy (deref (get-addr (cast (ptr u8)(-> state m_data))) (-> state m_remainder)) message length)
+		    (set (-> state m_length) (+ length (-> state m_length)))
+		    (set (-> state m_remainder) (cast u8 newLength))
+		    (return)
+	    )
 	)
 
     // init the variables
-    if (state->m_length < SC_BUFSIZE) {
-        h0 = h3 = h6 = h9  = state->m_state[0];
-        h1 = h4 = h7 = h10 = state->m_state[1];
-        h2 = h5 = h8 = h11 = SC_CONST;
-    } else {
-        h0 = state->m_state[0];
-        h1 = state->m_state[1];
-        h2 = state->m_state[2];
-        h3 = state->m_state[3];
-        h4 = state->m_state[4];
-        h5 = state->m_state[5];
-        h6 = state->m_state[6];
-        h7 = state->m_state[7];
-        h8 = state->m_state[8];
-        h9 = state->m_state[9];
-        h10 = state->m_state[10];
-        h11 = state->m_state[11];
-    }
 	(cond ((< (-> state m_length) SC_BUFSIZE)
-	       (set h0 (set h3 (set h6 (set h9 (deref (-> state m_state) 0)))))
-		(set h1 (set h4 (set h7 (set h10 (deref (-> state m_state) 1)))))
-		(set h2 (set h5 (set h8 (set h11 SC_CONST))))
-	     )
-		(else (set h0 (deref (-> state m_state) 0))
+	        (set h0 (set h3 (set h6 (set h9 (deref (-> state m_state) 0)))))
+		    (set h1 (set h4 (set h7 (set h10 (deref (-> state m_state) 1)))))
+		    (set h2 (set h5 (set h8 (set h11 SC_CONST))))
+	        )
+		 (else (set h0 (deref (-> state m_state) 0))
 		
-		(set h1 (deref (-> state m_state) 1))
-		(set h2 (deref (-> state m_state) 2))
-		(set h3 (deref (-> state m_state) 3))
-		(set h4 (deref (-> state m_state) 4))
-		(set h5 (deref (-> state m_state) 5))
-		(set h6 (deref (-> state m_state) 6))
-		(set h7 (deref (-> state m_state) 7))
-		(set h8 (deref (-> state m_state) 8))
-		(set h9 (deref (-> state m_state) 9))
-		(set h10 (deref (-> state m_state) 10))
-		(set h11 (deref (-> state m_state) 11))
+		    (set h1 (deref (-> state m_state) 1))
+		    (set h2 (deref (-> state m_state) 2))
+		    (set h3 (deref (-> state m_state) 3))
+		    (set h4 (deref (-> state m_state) 4))
+		    (set h5 (deref (-> state m_state) 5))
+		    (set h6 (deref (-> state m_state) 6))
+		    (set h7 (deref (-> state m_state) 7))
+		    (set h8 (deref (-> state m_state) 8))
+		    (set h9 (deref (-> state m_state) 9))
+		    (set h10 (deref (-> state m_state) 10))
+		    (set h11 (deref (-> state m_state) 11))
 		)
 	)
-    state->m_length = length + state->m_length;
 	(set (-> state m_length) (+ length (-> state m_length)))
 	
     // if we've got anything stuffed away, use it now
-    if (state->m_remainder) {
-        uint8_t prefix = SC_BUFSIZE-state->m_remainder;
-        memcpy(&(((uint8_t *)state->m_data)[state->m_remainder]), 
-               message, prefix);
-        u.p64 = state->m_data;
-        mix(u.p64,&h0,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11);
-	mix(&u.p64[SC_NUMVARS], 
-	    &h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
-	u.p8 = ((const uint8_t *)message) + prefix;
-	length -= prefix;
-    } else {
-        u.p8 = (const uint8_t *)message;
-    }
 	(cond ((-> state m_remainder)
-	       (let prefix u8 (- SC_BUFSIZE (-> state m_remainder)))
-		(call memcpy (get-addr (deref (cast (ptr u8)(-> state m_data)) (-> state m_remainder))) message prefix)
-		(set (. u p64) (-> state m_data))
-		(call mix (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
-		(call mix (get-addr (. u p64) SC_NUMVARS) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
-		(set (. u p8) (+ (cast (ptr u8) message) prefix))
-		(set length (- length prefix))
-		)
-		(else (set (. u p8) (cast (ptr u8) message)))
+	        (let prefix u8 (- SC_BUFSIZE (-> state m_remainder)))
+	        (call memcpy (deref (get-addr (cast (ptr u8)(-> state m_data))) (-> state m_remainder)) message prefix)
+	        (set (. u p64) (-> state m_data))
+	        (mix (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+	        (mix (get-addr (deref (. u p64) SC_NUMVARS)) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+	        (set (. u p8) (+ (cast (ptr u8) message) prefix))
+	        (set length (- length prefix))
+		    )
+		  (else (set (. u p8) (cast (ptr u8) message)))
 	)
 	
     // handle all whole blocks of SC_BLOCKSIZE bytes
@@ -563,13 +503,14 @@ void spooky_update (
 	(set remainder (cast u8 (- length (- (cast const (ptr u8) endp) (. u p8)))))
 	
 	(cond ((or ALLOW_UNALIGNED_READS (== (& (. u i) 0x7) 0))
-	       (while (< (. u p64) endp)
-			(call mix (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
-			(set (. u p64) (+ (. u p64) SC_NUMVARS))
-			))
-		   (else (while (< (. u p64) endp)
+	            (while (< (. u p64) endp)
+			        (call mix (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+			        (set (. u p64) (+ (. u p64) SC_NUMVARS))
+			    )
+            )
+		    (else (while (< (. u p64) endp)
 		                (call memcpy (-> state m_data) (. u p8) SC_BLOCKSIZE)
-						(call mix (-> state m_data) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11)
+						(call mix (-> state m_data) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
 						(set (. u p64) (+ (. u p64) SC_NUMVARS))
 					)
 			)
@@ -593,8 +534,9 @@ void spooky_update (
 	(set (deref (-> state m_state) 10) h10)
 	(set (deref (-> state m_state) 11) h11)
 )
+
 // report the hash for the concatenation of all message fragments so far
-(define spooky_final ((state (ptr spooky_state)) (hash1 (ptr u64)) (hash2 (ptr u64))))
+(define spooky_final ((state (ptr spooky_state)) (hash1 (ptr u64)) (hash2 (ptr u64)))
 	(let h0 u64 ) (let h1 u64) (let h2 u64) (let h3 u64) (let h4 u64) (let h5 u64) (let h6 u64) (let h7 u64) (let h8 u64) (let h9 u64) (let h10 u64) (let h11 u64)
 	
 	(let data (ptr u64) (cast const u64 (-> state m_data)))
@@ -605,6 +547,7 @@ void spooky_update (
 	(cond ((< (-> state m_length) SC_BUFSIZE)
 			(call spooky_shorthash (-> state m_data) (-> state m_length) hash1 hash2)
 			(return)
+	    )
 	)
 	
 	(set h0 (deref (-> state m_state) 0))
@@ -622,9 +565,10 @@ void spooky_update (
 	
 	
 	(cond ((>= remainder SC_BLOCKSIZE)
-		(call mix data (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+		    (call mix data (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
 			(set data (+ data SC_NUMVARS))
 			(set remainder (- remainder SC_BLOCKSIZE))
+	    )
 	)
 	
 	// mix in the last partial block, and the length mod SC_BLOCKSIZE
@@ -637,8 +581,7 @@ void spooky_update (
 	
 	(set (deref hash1) h0)
 	(set (deref hash2) h1)
-	)
-}
+)
 
 // do the whole hash in one call
 (define spooky_hash128 ((message const (ptr ())) (length u64) (hash1 (ptr u64)) (hash2 (ptr u64))) () export
@@ -664,20 +607,20 @@ void spooky_update (
 	(set endp (+ (. u p64) (* (/ length SC_BLOCKSIZE) SC_NUMVARS)))
 
     // handle all whole blocks of SC_BLOCKSIZE bytes
-	(cond ((|| ALLOW_UNALIGNED_READS (== (& (. u i) 7) 0)))
-		(while (< (. u p64) endp)
-			(call memcpy (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
-			(set (. u p64) (+ (. u p64) SC_NUMVARS))
+	(cond ((or ALLOW_UNALIGNED_READS (== (& (. u i) 7) 0))
+		        (while (< (. u p64) endp)
+			        (call memcpy (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+			        (set (. u p64) (+ (. u p64) SC_NUMVARS))
+			    )
+		    )
+		(else 
+		    (while (< (. u p64) endp)
+			        (call memcpy buf (. u p64) SC_BLOCKSIZE)
+					(call mix buf (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+					(set (. u p64) (+ (. u p64) SC_NUMVARS))
 			)
-			)
-			(else 
-			     (while (< (. u p64) endp)
-				        (call memcpy buf (. u p64) SC_BLOCKSIZE)
-						(call mix buf (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
-						(set (. u p64) (+ (. u p64) SC_NUMVARS))
-					)
-				)
 		)
+	)
 		
     // handle the last partial block of SC_BLOCKSIZE bytes
 	(set remainder (- length (- (cast const (ptr u8)) endp) (cast const (ptr u8)) message))
@@ -693,16 +636,16 @@ void spooky_update (
 	(set (deref hash2) h1)
 )
 
-(define spooky_hash64 ((message const (ptr ()) (length u64) (seed u64)) u64 export
+(define spooky_hash64 ((message const (ptr ())) (length u64) (seed u64)) u64 export
 	(let hash1 u64 seed)
 	(call spooky_hash128 message length (get-addr hash1) (get-addr seed))
 	(return hash1)
 )
 
-(define spooky_hash32 ((message const (ptr ()) (length u64) (seed u32)) u32 export
+(define spooky_hash32 ((message const (ptr ())) (length u64) (seed u32)) u32 export
 
 	(let hash1 u64 seed)(let hash2 u64 seed)
 	
 	(call spooky_hash128 message length (get-addr hash1) (get-addr hash2))
 	(return ((cast u32) hash1))
-	)
+)

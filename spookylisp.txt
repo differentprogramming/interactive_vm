@@ -70,7 +70,7 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 
 (define is_little_endian () ? export
     (let i u32 0x11223344)
-	(return (== (deref(cast (ptr u8)(take-addr i))) 0x44))
+	(return (== (deref(take-addr (cast i (ptr u8)))) 0x44))
 )
       
 
@@ -101,66 +101,66 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
              (s9 (ptr u64)) 
              (s10 (ptr u64)) 
              (s11 (ptr u64))) () inline
-    (let (deref s0) (+ (deref s0) (. data 0)))
-    (let (deref s2) (^ (deref s2) (deref s10)))
-	(let (deref s11) (^ (deref s11) (deref s0)))
-	(let (deref s0) (call rot64 (deref s0) 11))
-	(let (deref s11) (+ (deref s11) (deref s1)))
-	(let (deref s1) (+ (deref s1) (. data 1)))
-	(let (deref s3) (^ (deref s3) (deref s11)))
-	(let (deref s0) (^ (deref s0) (deref s1)))
-	(let (deref s1) (call rot64 (deref s1) 32))
-	(let (deref s0) (+ (deref s0) (deref s2)))
-	(let (deref s2) (+ (deref s2) (. data 2)))
-	(let (deref s4) (^ (deref s4) (deref s0)))
-	(let (deref s1) (^ (deref s1) (deref s2)))
-	(let (deref s2) (call rot64 (deref s2) 43))
-	(let (deref s1) (+ (deref s1) (deref s3)))
-	(let (deref s3) (+ (deref s3) (. data 3)))
-	(let (deref s5) (^ (deref s5) (deref s1)))
-	(let (deref s2) (^ (deref s2) (deref s3)))
-	(let (deref s3) (call rot64 (deref s3) 31))
-	(let (deref s2) (+ (deref s2) (deref s4)))
-	(let (deref s4) (+ (deref s4) (. data 4)))
-	(let (deref s6) (^ (deref s6) (deref s2)))
-	(let (deref s3) (^ (deref s3) (deref s4)))
-	(let (deref s4) (call rot64 (deref s4) 17))
-    (let (deref s3) (+ (deref s3) (deref s5)))
-	(let (deref s5) (+ (deref s5) (. data 5)))
-	(let (deref s7) (^ (deref s7) (deref s3)))
-	(let (deref s4) (^ (deref s4) (deref s5)))
-	(let (deref s5) (call rot64 (deref s5) 28))
-	(let (deref s4) (+ (deref s4) (deref s6)))
-	(let (deref s6) (+ (deref s6) (. data 6)))
-	(let (deref s8) (^ (deref s8) (deref s4)))
-	(let (deref s5) (^ (deref s5) (deref s6)))
-	(let (deref s6) (call rot64 (deref s6) 39))
-	(let (deref s5) (+ (deref s5) (deref s7)))
-	(let (deref s7) (+ (deref s7) (. data 7)))
-	(let (deref s9) (^ (deref s9) (deref s5)))
-	(let (deref s6) (^ (deref s6) (deref s7)))
-	(let (deref s7) (call rot64 (deref s7) 57))
-	(let (deref s6) (+ (deref s6) (deref s8)))
-	(let (deref s8) (+ (deref s8) (. data 8)))
-	(let (deref s10) (^ (deref s10) (deref s6)))
-	(let (deref s7) (^ (deref s7) (deref s8)))
-	(let (deref s8) (call rot64 (deref s8) 55))
-	(let (deref s7) (+ (deref s7) (deref s9)))
-	(let (deref s9) (+ (deref s9) (. data 9)))
-	(let (deref s11) (^ (deref s11) (deref s7)))
-	(let (deref s8) (^ (deref s8) (deref s9)))
-	(let (deref s9) (call rot64 (deref s9) 54))
-	(let (deref s8) (+ (deref s8) (deref s10)))
-	(let (deref s10) (+ (deref s10) (. data 10)))
-	(let (deref s0) (^ (deref s0) (deref s8)))
-	(let (deref s9) (^ (deref s9) (deref s10)))
-	(let (deref s10) (call rot64 (deref s10) 22))
-	(let (deref s9) (+ (deref s9) (deref s11)))
-	(let (deref s11) (+ (deref s11) (. data 11)))
-	(let (deref s1) (^ (deref s1) (deref s9)))
-	(let (deref s10) (^ (deref s10) (deref s11)))
-	(let (deref s11) (call rot64 (deref s11) 46))
-	(let (deref s10) (+ (deref s10) (deref s0)))
+    (set (deref s0) (+ (deref s0) (deref data 0)))
+    (set (deref s2) (^ (deref s2) (deref s10)))
+	(set (deref s11) (^ (deref s11) (deref s0)))
+	(set (deref s0) (call rot64 (deref s0) 11))
+	(set (deref s11) (+ (deref s11) (deref s1)))
+	(set (deref s1) (+ (deref s1) (deref data 1)))
+	(set (deref s3) (^ (deref s3) (deref s11)))
+	(set (deref s0) (^ (deref s0) (deref s1)))
+	(set (deref s1) (call rot64 (deref s1) 32))
+	(set (deref s0) (+ (deref s0) (deref s2)))
+	(set (deref s2) (+ (deref s2) (deref data 2)))
+	(set (deref s4) (^ (deref s4) (deref s0)))
+	(set (deref s1) (^ (deref s1) (deref s2)))
+	(set (deref s2) (call rot64 (deref s2) 43))
+	(set (deref s1) (+ (deref s1) (deref s3)))
+	(set (deref s3) (+ (deref s3) (deref data 3)))
+	(set (deref s5) (^ (deref s5) (deref s1)))
+	(set (deref s2) (^ (deref s2) (deref s3)))
+	(set (deref s3) (call rot64 (deref s3) 31))
+	(set (deref s2) (+ (deref s2) (deref s4)))
+	(set (deref s4) (+ (deref s4) (deref data 4)))
+	(set (deref s6) (^ (deref s6) (deref s2)))
+	(set (deref s3) (^ (deref s3) (deref s4)))
+	(set (deref s4) (call rot64 (deref s4) 17))
+    (set (deref s3) (+ (deref s3) (deref s5)))
+	(set (deref s5) (+ (deref s5) (deref data 5)))
+	(set (deref s7) (^ (deref s7) (deref s3)))
+	(set (deref s4) (^ (deref s4) (deref s5)))
+	(set (deref s5) (call rot64 (deref s5) 28))
+	(set (deref s4) (+ (deref s4) (deref s6)))
+	(set (deref s6) (+ (deref s6) (deref data 6)))
+	(set (deref s8) (^ (deref s8) (deref s4)))
+	(set (deref s5) (^ (deref s5) (deref s6)))
+	(set (deref s6) (call rot64 (deref s6) 39))
+	(set (deref s5) (+ (deref s5) (deref s7)))
+	(set (deref s7) (+ (deref s7) (deref data 7)))
+	(set (deref s9) (^ (deref s9) (deref s5)))
+	(set (deref s6) (^ (deref s6) (deref s7)))
+	(set (deref s7) (call rot64 (deref s7) 57))
+	(set (deref s6) (+ (deref s6) (deref s8)))
+	(set (deref s8) (+ (deref s8) (deref data 8)))
+	(set (deref s10) (^ (deref s10) (deref s6)))
+	(set (deref s7) (^ (deref s7) (deref s8)))
+	(set (deref s8) (call rot64 (deref s8) 55))
+	(set (deref s7) (+ (deref s7) (deref s9)))
+	(set (deref s9) (+ (deref s9) (deref data 9)))
+	(set (deref s11) (^ (deref s11) (deref s7)))
+	(set (deref s8) (^ (deref s8) (deref s9)))
+	(set (deref s9) (call rot64 (deref s9) 54))
+	(set (deref s8) (+ (deref s8) (deref s10)))
+	(set (deref s10) (+ (deref s10) (deref data 10)))
+	(set (deref s0) (^ (deref s0) (deref s8)))
+	(set (deref s9) (^ (deref s9) (deref s10)))
+	(set (deref s10) (call rot64 (deref s10) 22))
+	(set (deref s9) (+ (deref s9) (deref s11)))
+	(set (deref s11) (+ (deref s11) (deref data 11)))
+	(set (deref s1) (^ (deref s1) (deref s9)))
+	(set (deref s10) (^ (deref s10) (deref s11)))
+	(set (deref s11) (call rot64 (deref s11) 46))
+	(set (deref s10) (+ (deref s10) (deref s0)))
 )
 	
 	
@@ -184,60 +184,60 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 //
 
 (define endPartial ((h0 (ptr u64)) (h1 (ptr u64)) (h2 (ptr u64)) (h3 (ptr u64)) (h4 (ptr u64)) (h5 (ptr u64)) (h6 (ptr u64)) (h7 (ptr u64)) (h8 (ptr u64)) (h9 (ptr u64)) (h10 (ptr u64)) (h11 (ptr u64)))
-(let (deref h11) (+ (deref h11) (deref h1)))
-(let (deref h2) (^ (deref h2) (deref h11)))
-(let (deref h1) (call rot64 (deref h1) 44))
-(let (deref h0) (+ (deref h0) (deref h2)))
-(let (deref h3) (^ (deref h3) (deref h0)))
-(let (deref h2) (call rot64 (deref h2) 15))
-(let (deref h1) (+ (deref h1) (deref h3)))
-(let (deref h4) (^ (deref h4) (deref h1)))
-(let (deref h3) (call rot64 (deref h3) 34))
-(let (deref h2) (+ (deref h2) (deref h4)))
-(let (deref h5) (^ (deref h5) (deref h2)))
-(let (deref h4) (call rot64 (deref h4) 21))
-(let (deref h3) (+ (deref h3) (deref h5)))
-(let (deref h6) (^ (deref h6) (deref h3)))
-(let (deref h5) (call rot64 (deref h5) 38))
-(let (deref h4) (+ (deref h4) (deref h6)))
-(let (deref h7) (^ (deref h7) (deref h4)))
-(let (deref h6) (call rot64 (deref h6) 33))
-(let (deref h5) (+ (deref h5) (deref h7)))
-(let (deref h8) (^ (deref h8) (deref h5)))
-(let (deref h7) (call rot64 (deref h7) 10))
-(let (deref h6) (+ (deref h6) (deref h8)))
-(let (deref h9) (^ (deref h9) (deref h6)))
-(let (deref h8) (call rot64 (deref h8) 13))
-(let (deref h7) (+ (deref h7) (deref h9)))
-(let (deref h10) (^ (deref h10) (deref h7)))
-(let (deref h9) (call rot64 (deref h9) 38))
-(let (deref h8) (+ (deref h8) (deref h10)))
-(let (deref h11) (^ (deref h11) (deref h8)))
-(let (deref h10) (call rot64 (deref h10) 53))
-(let (deref h9) (+ (deref h9) (deref h11)))
-(let (deref h0) (^ (deref h0) (deref h9)))
-(let (deref h11) (call rot64 (deref h11) 42))
-(let (deref h10) (+ (deref h10) (deref h0)))
-(let (deref h1) (^ (deref h1) (deref h10)))
-(let (deref h0) (call rot64 (deref h0) 54))
+(set (deref h11) (+ (deref h11) (deref h1)))
+(set (deref h2) (^ (deref h2) (deref h11)))
+(set (deref h1) (call rot64 (deref h1) 44))
+(set (deref h0) (+ (deref h0) (deref h2)))
+(set (deref h3) (^ (deref h3) (deref h0)))
+(set (deref h2) (call rot64 (deref h2) 15))
+(set (deref h1) (+ (deref h1) (deref h3)))
+(set (deref h4) (^ (deref h4) (deref h1)))
+(set (deref h3) (call rot64 (deref h3) 34))
+(set (deref h2) (+ (deref h2) (deref h4)))
+(set (deref h5) (^ (deref h5) (deref h2)))
+(set (deref h4) (call rot64 (deref h4) 21))
+(set (deref h3) (+ (deref h3) (deref h5)))
+(set (deref h6) (^ (deref h6) (deref h3)))
+(set (deref h5) (call rot64 (deref h5) 38))
+(set (deref h4) (+ (deref h4) (deref h6)))
+(set (deref h7) (^ (deref h7) (deref h4)))
+(set (deref h6) (call rot64 (deref h6) 33))
+(set (deref h5) (+ (deref h5) (deref h7)))
+(set (deref h8) (^ (deref h8) (deref h5)))
+(set (deref h7) (call rot64 (deref h7) 10))
+(set (deref h6) (+ (deref h6) (deref h8)))
+(set (deref h9) (^ (deref h9) (deref h6)))
+(set (deref h8) (call rot64 (deref h8) 13))
+(set (deref h7) (+ (deref h7) (deref h9)))
+(set (deref h10) (^ (deref h10) (deref h7)))
+(set (deref h9) (call rot64 (deref h9) 38))
+(set (deref h8) (+ (deref h8) (deref h10)))
+(set (deref h11) (^ (deref h11) (deref h8)))
+(set (deref h10) (call rot64 (deref h10) 53))
+(set (deref h9) (+ (deref h9) (deref h11)))
+(set (deref h0) (^ (deref h0) (deref h9)))
+(set (deref h11) (call rot64 (deref h11) 42))
+(set (deref h10) (+ (deref h10) (deref h0)))
+(set (deref h1) (^ (deref h1) (deref h10)))
+(set (deref h0) (call rot64 (deref h0) 54))
 )
 
 
 
 (define end ((data const (ptr u64)) (h0 (ptr u64)) (h1 (ptr u64)) (h2 (ptr u64)) (h3 (ptr u64)) (h4 (ptr u64)) (h5 (ptr u64)) (h6 (ptr u64)) (h7 (ptr u64)) (h8 (ptr u64)) (h9 (ptr u64)) (h10 (ptr u64)) (h11 (ptr u64)))
             () inline
-			(let (deref h0) (+ (deref h0) (. data 0)))
-			(let (deref h1) (+ (deref h1) (. data 1)))
-			(let (deref h2) (+ (deref h2) (. data 2)))
-			(let (deref h3) (+ (deref h3) (. data 3)))
-			(let (deref h4) (+ (deref h4) (. data 4)))
-			(let (deref h5) (+ (deref h5) (. data 5)))
-			(let (deref h6) (+ (deref h6) (. data 6)))
-			(let (deref h7) (+ (deref h7) (. data 7)))
-			(let (deref h8) (+ (deref h8) (. data 8)))
-			(let (deref h9) (+ (deref h9) (. data 9)))
-			(let (deref h10) (+ (deref h10) (. data 10)))
-			(let (deref h11) (+ (deref h11) (. data 11)))
+			(set (deref h0) (+ (deref h0) (deref data 0)))
+			(set (deref h1) (+ (deref h1) (deref data 1)))
+			(set (deref h2) (+ (deref h2) (deref data 2)))
+			(set (deref h3) (+ (deref h3) (deref data 3)))
+			(set (deref h4) (+ (deref h4) (deref data 4)))
+			(set (deref h5) (+ (deref h5) (deref data 5)))
+			(set (deref h6) (+ (deref h6) (deref data 6)))
+			(set (deref h7) (+ (deref h7) (deref data 7)))
+			(set (deref h8) (+ (deref h8) (deref data 8)))
+			(set (deref h9) (+ (deref h9) (deref data 9)))
+			(set (deref h10) (+ (deref h10) (deref data 10)))
+			(set (deref h11) (+ (deref h11) (deref data 11)))
 			(call endPartial h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11)
 			(call endPartial h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11)
 			(call endPartial h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11)
@@ -262,42 +262,42 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 
 (define short_mix ((h0 (ptr u64)) (h1 (ptr u64)) (h2 (ptr u64)) (h3 (ptr u64)))
 			() inline
-		(let (deref h2) (call rot64 (deref h2) 50))
-		(let (deref h2) (+ (deref h2) (deref h3)))
-		(let (deref h0) (^ (deref h0) (deref h2)))
-		(let (deref h3) (call rot64 (deref h3) 52))
-		(let (deref h3) (+ (deref h3) (deref h0)))
-		(let (deref h1) (^ (deref h1) (deref h3)))
-		(let (deref h0) (call rot64 (deref h0) 30))
-		(let (deref h0) (+ (deref h0) (deref h1)))
-		(let (deref h2) (^ (deref h2) (deref h0)))
-		(let (deref h1) (call rot64 (deref h1) 41))
-		(let (deref h1) (+ (deref h1) (deref h2)))
-		(let (deref h3) (^ (deref h3) (deref h1)))
-		(let (deref h2) (call rot64 (deref h2) 54))
-		(let (deref h2) (+ (deref h2) (deref h3)))
-		(let (deref h0) (^ (deref h0) (deref h2)))
-		(let (deref h3) (call rot64 (deref h3) 48))
-		(let (deref h3) (+ (deref h3) (deref h0)))
-		(let (deref h1) (^ (deref h1) (deref h3)))
-		(let (deref h0) (call rot64 (deref h0) 38))
-		(let (deref h0) (+ (deref h0) (deref h1)))
-		(let (deref h2) (^ (deref h2) (deref h0)))
-		(let (deref h1) (call rot64 (deref h1) 37))
-		(let (deref h1) (+ (deref h1) (deref h2)))
-		(let (deref h3) (^ (deref h3) (deref h1)))
-		(let (deref h2) (call rot64 (deref h2) 62))
-		(let (deref h2) (+ (deref h2) (deref h3)))
-		(let (deref h0) (^ (deref h0) (deref h2)))
-		(let (deref h3) (call rot64 (deref h3) 34))
-		(let (deref h3) (+ (deref h3) (deref h0)))
-		(let (deref h1) (^ (deref h1) (deref h3)))
-		(let (deref h0) (call rot64 (deref h0) 5))
-		(let (deref h0) (+ (deref h0) (deref h1)))
-		(let (deref h2) (^ (deref h2) (deref h0)))
-		(let (deref h1) (call rot64 (deref h1) 36))
-		(let (deref h1) (+ (deref h1) (deref h2)))
-		(let (deref h3) (^ (deref h3) (deref h1)))
+		(set (deref h2) (call rot64 (deref h2) 50))
+		(set (deref h2) (+ (deref h2) (deref h3)))
+		(set (deref h0) (^ (deref h0) (deref h2)))
+		(set (deref h3) (call rot64 (deref h3) 52))
+		(set (deref h3) (+ (deref h3) (deref h0)))
+		(set (deref h1) (^ (deref h1) (deref h3)))
+		(set (deref h0) (call rot64 (deref h0) 30))
+		(set (deref h0) (+ (deref h0) (deref h1)))
+		(set (deref h2) (^ (deref h2) (deref h0)))
+		(set (deref h1) (call rot64 (deref h1) 41))
+		(set (deref h1) (+ (deref h1) (deref h2)))
+		(set (deref h3) (^ (deref h3) (deref h1)))
+		(set (deref h2) (call rot64 (deref h2) 54))
+		(set (deref h2) (+ (deref h2) (deref h3)))
+		(set (deref h0) (^ (deref h0) (deref h2)))
+		(set (deref h3) (call rot64 (deref h3) 48))
+		(set (deref h3) (+ (deref h3) (deref h0)))
+		(set (deref h1) (^ (deref h1) (deref h3)))
+		(set (deref h0) (call rot64 (deref h0) 38))
+		(set (deref h0) (+ (deref h0) (deref h1)))
+		(set (deref h2) (^ (deref h2) (deref h0)))
+		(set (deref h1) (call rot64 (deref h1) 37))
+		(set (deref h1) (+ (deref h1) (deref h2)))
+		(set (deref h3) (^ (deref h3) (deref h1)))
+		(set (deref h2) (call rot64 (deref h2) 62))
+		(set (deref h2) (+ (deref h2) (deref h3)))
+		(set (deref h0) (^ (deref h0) (deref h2)))
+		(set (deref h3) (call rot64 (deref h3) 34))
+		(set (deref h3) (+ (deref h3) (deref h0)))
+		(set (deref h1) (^ (deref h1) (deref h3)))
+		(set (deref h0) (call rot64 (deref h0) 5))
+		(set (deref h0) (+ (deref h0) (deref h1)))
+		(set (deref h2) (^ (deref h2) (deref h0)))
+		(set (deref h1) (call rot64 (deref h1) 36))
+		(set (deref h1) (+ (deref h1) (deref h2)))
+		(set (deref h3) (^ (deref h3) (deref h1)))
 	)
 	
 
@@ -313,160 +313,166 @@ inline uint64_t hash_string_with_seed(const char *a, uint64_t seed) {
 // For every pair of input bits,
 // with probability 50 +- .75% (the worst case is approximately that)
 //
-static inline void short_end(
-	uint64_t *h0,
-	uint64_t *h1,
-	uint64_t *h2,
-	uint64_t *h3
-) {
-    *h3 ^= *h2;  *h2 = rot64(*h2, 15);  *h3 += *h2;
-    *h0 ^= *h3;  *h3 = rot64(*h3, 52);  *h0 += *h3;
-    *h1 ^= *h0;  *h0 = rot64(*h0, 26);  *h1 += *h0;
-    *h2 ^= *h1;  *h1 = rot64(*h1, 51);  *h2 += *h1;
-    *h3 ^= *h2;  *h2 = rot64(*h2, 28);  *h3 += *h2;
-    *h0 ^= *h3;  *h3 = rot64(*h3, 9);   *h0 += *h3;
-    *h1 ^= *h0;  *h0 = rot64(*h0, 47);  *h1 += *h0;
-    *h2 ^= *h1;  *h1 = rot64(*h1, 54);  *h2 += *h1;
-    *h3 ^= *h2;  *h2 = rot64(*h2, 32);  *h3 += *h2;
-    *h0 ^= *h3;  *h3 = rot64(*h3, 25);  *h0 += *h3;
-    *h1 ^= *h0;  *h0 = rot64(*h0, 63);  *h1 += *h0;
-}
 
 (define short_end ((h0 (ptr u64))(h1 (ptr u64)) (h2 (ptr u64)) (h3 (ptr u64))) () inline 
-    (let (deref h3) (^ (deref h3) (deref h2)))
-	(let (deref h2) (call rot64 (deref h2) 15))
-	
+    (set (deref h3) (^ (deref h3) (deref h2)))
+	(set (deref h2) (call rot64 (deref h2) 15))
+	(set (deref h3) (+ (deref h3) (deref h2)))
+	(set (deref h0) (^ (deref h0) (deref h3)))
+	(set (deref h3) (call rot64 (deref h3) 52))
+	(set (deref h0) (+ (deref h0) (deref h3)))
+	(set (deref h1) (^ (deref h1) (deref h0)))
+	(set (deref h0) (call rot64 (deref h0) 26))
+	(set (deref h1) (+ (deref h1) (deref h0)))
+	(set (deref h2) (^ (deref h2) (deref h1)))
+	(set (deref h1) (call rot64 (deref h1) 51))
+	(set (deref h2) (+ (deref h2) (deref h1)))
+	(set (deref h3) (^ (deref h3) (deref h2)))
+	(set (deref h2) (call rot64 (deref h2) 28))
+	(set (deref h3) (+ (deref h3) (deref h2)))
+	(set (deref h0) (^ (deref h0) (deref h3)))
+	(set (deref h3) (call rot64 (deref h3) 9))
+	(set (deref h0) (+ (deref h0) (deref h3)))
+	(set (deref h1) (^ (deref h1) (deref h0)))
+	(set (deref h0) (call rot64 (deref h0) 47))
+	(set (deref h1) (+ (deref h1) (deref h0)))
+	(set (deref h2) (^ (deref h2) (deref h1)))
+	(set (deref h1) (call rot64 (deref h1) 54))
+	(set (deref h2) (+ (deref h2) (deref h1)))
+	(set (deref h3) (^ (deref h3) (deref h2)))
+	(set (deref h2) (call rot64 (deref h2) 32))
+	(set (deref h3) (+ (deref h3) (deref h2)))
+	(set (deref h0) (^ (deref h0) (deref h3)))
+	(set (deref h3) (call rot64 (deref h3) 25))
+	(set (deref h0) (+ (deref h0) (deref h3)))
+	(set (deref h1) (^ (deref h1) (deref h0)))
+	(set (deref h0) (call rot64 (deref h0) 63))
+	(set (deref h1) (+ (deref h1) (deref h0)))
 )
 //
 // short hash ... it could be used on any message,
 // but it's used by Spooky just for short messages.
 //               
-void spooky_shorthash(
-	const void *message,
-	size_t length,
-	uint64_t *hash1,
-	uint64_t *hash2
-) {
-    uint64_t buf[2 * SC_NUMVARS];
 
-    union {
-        const uint8_t *p8;
-        uint32_t *p32;
-        uint64_t *p64;
-        size_t i;
-    } u;
+) 
+(define spooky_shorthash ((message const (ptr ()) (length u64) (hash2 (ptr u64)) (hash2 (ptr u64))) ()
+(
+   (let (buf (array u64 (* 2 SC_NUMVARS))))
+   (let u (union (p8 const (ptr u8))(p32 (ptr u32))(p64 (ptr u64))(i u64)))
 
-    size_t remainder;
-    uint64_t a, b, c, d;
-    u.p8 = (const uint8_t *)message;
+    (let remainder u64)
+    (let (a u64) (b u64) (c u64) (d u64))
+    (set (. u p8) (cast const (ptr u8) message))) 
 
-    if (!ALLOW_UNALIGNED_READS && (u.i & 0x7)) {
-        memcpy(buf, message, length);
-        u.p64 = buf;
-    }
+    (cond ((and (not ALLOW_UNALIGNED_READS) 
+                (!= 0 (& (. u i) 0x7))) 
+           ((call memcpy buf message length)
+            (set (. u p64) message))))
+			
+	(set remainder (% length 32))
+	
+	(set a (deref hash1))
+	(set b (deref hash2))
+	(set c SC_CONST)
+	(set d SC_CONST)
 
-    remainder = length % 32;
-    a = *hash1;
-    b = *hash2;
-    c = SC_CONST;
-    d = SC_CONST;
-
-    if (length > 15) {
-        const uint64_t *endp = u.p64 + (length/32)*4;
-
-        // handle all complete sets of 32 bytes
-        for (; u.p64 < endp; u.p64 += 4) {
-            c += u.p64[0];
-            d += u.p64[1];
-            short_mix(&a, &b, &c, &d);
-            a += u.p64[2];
-            b += u.p64[3];
-        }
-
-        // Handle the case of 16+ remaining bytes.
-        if (remainder >= 16) {
-            c += u.p64[0];
-            d += u.p64[1];
-            short_mix(&a, &b, &c, &d);
-            u.p64 += 2;
-            remainder -= 16;
-        }
-    }
-
+	(cond ((> length 15)
+		(let endp const (ptr u64) (+ (. u p64) (* (/ length 32) 4)))
+		(for () (< (. u p64) endp) (set (. u p64) (+ (. u p64) 4))
+			(set c (+ c (deref (. u p64))))
+			(set d (+ d (deref (. u p64 ) 1)))
+			(call short_mix (get-addr a) (get-addr b) (get-addr c) (get-addr d))
+			(set a (+ a (deref (. u p64) 2)))
+			(set b (+ b (deref (. u p64) 3)))
+		)
+		(cond ((> remainder 16)
+			(set c (+ c (deref (. u p64) 0)))
+			(set d (+ d (deref (. u p64) 1)))
+			(call short_mix (get-addr a) (get-addr b) (get-addr c) (get-addr d))
+			(set (. u p64) (+ (. u p64) 2))
+			(set remainder (- remainder 16))
+		)
+	)		
+	
+	
     // Handle the last 0..15 bytes, and its length
-    d += ((uint64_t)length) << 56;
-    switch (remainder) {
-    case 15:
-        d += ((uint64_t)u.p8[14]) << 48;
-    case 14:
-        d += ((uint64_t)u.p8[13]) << 40;
-    case 13:
-        d += ((uint64_t)u.p8[12]) << 32;
-    case 12:
-        d += u.p32[2];
-        c += u.p64[0];
-        break;
-    case 11:
-        d += ((uint64_t)u.p8[10]) << 16;
-    case 10:
-        d += ((uint64_t)u.p8[9]) << 8;
-    case 9:
-        d += (uint64_t)u.p8[8];
-    case 8:
-        c += u.p64[0];
-        break;
-    case 7:
-        c += ((uint64_t)u.p8[6]) << 48;
-    case 6:
-        c += ((uint64_t)u.p8[5]) << 40;
-    case 5:
-        c += ((uint64_t)u.p8[4]) << 32;
-    case 4:
-        c += u.p32[0];
-        break;
-    case 3:
-        c += ((uint64_t)u.p8[2]) << 16;
-    case 2:
-        c += ((uint64_t)u.p8[1]) << 8;
-    case 1:
-        c += (uint64_t)u.p8[0];
-        break;
-    case 0:
-        c += SC_CONST;
-        d += SC_CONST;
-    }
-    short_end(&a, &b, &c, &d);
-    *hash1 = a;
-    *hash2 = b;
-}
+
+	(set d (+ d (<< (cast u64 length) 56)))
+	(switch remainder
+		(15 (set d (+ d (<< (cast u64 (deref (. u p8) 14)) 48)))
+		    (fallthrough))
+		(14 (set d (+ d (<< (cast u64 (deref (. u p8) 13)) 40)))
+			(fallthrough))
+		(13 (set d (+ d (<< (cast u64 (deref (. u p8) 12)) 32)))
+			(fallthrough))
+		(12 (set d (deref (. u p32) 2))
+			(set c (+ c (deref (. u p64) 0))))
+		(11 (set d (+ d (<< (cast u64 (deref (. u p8) 10)) 16)))
+			(fallthrough))
+		(10 (set d (+ d (<< (cast u64 (deref (. u p8) 9)) 8)))
+			(fallthrough))
+		(9 (set d (+ d (deref (. u p8) 8)))
+			(fallthrough))
+		(8 (set c (+ c (deref (. u p64) 0))))
+		(7 (set c (+ c (<< (cast u64 (deref (. u p8) 6)) 48)))
+			(fallthrough))
+		(6 (set c (+ c (<< (cast u64 (deref (. u p8) 5)) 40)))
+			(fallthrough))
+		(5 (set c (+ c (<< (cast u64 (deref (. u p8) 4)) 32)))
+			(fallthrough))
+		(4 (set c (+ c (deref (. u p32) 0))))
+		(3 (set c (+ c (<< (cast u64 (deref (. u p8) 2)) 16)))
+			(fallthrough))
+		(2 (set c (+ c (<< (cast u64 (deref (. u p8) 1)) 8)))
+			(fallthrough))
+		(1 (set c (+ c (deref (. u p8) 0))))
+		(0 (set c (+ c SC_CONST))
+			(set d (+ d SC_CONST)))
+	)
+	
+		
+	(call short_end (get-addr a) (get-addr b) (get-addr c) (get-addr d))
+	(set (deref hash1) a)
+	(set (deref hash2) b)
+)
+
 
 // init spooky state
-void spooky_init(
-    struct spooky_state *state,
-    uint64_t seed1,
-    uint64_t seed2
-) {
-    state->m_length = 0;
-    state->m_remainder = 0;
-    state->m_state[0] = seed1;
-    state->m_state[1] = seed2;
-}
+
+(define spooky_init ((state (ptr spooky_state)) (seed1 u64) (seed2 u64)) ()
+	(set (-> state m_length) 0)
+	(set (-> state m_remainder) 0)
+	(set (deref (-> state m_state) 0) seed1)
+	(set (deref (-> state m_state) 1) seed2)
+)
 
 // add a message fragment to the state
 void spooky_update (  
     struct spooky_state *state,
     const void *message,
     size_t length
-) {
+) 
+
+(define spooky_update ((state (ptr spooky_state)) (message const (ptr ())) (length u64)) ()
+
     uint64_t h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11;
+	(let h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11)
+	
     size_t newLength = length + state->m_remainder;
+	(let newLength u64 (+ length (-> state m_remainder))
+	
     uint8_t remainder;  
+	(let remainder u8)
+	
     union {
         const uint8_t *p8;
         uint64_t *p64;
         size_t i;
     } u;
+	(let u (union (p8 const (ptr u8))(p64 (ptr u64))(i u64)))
+	
     const uint64_t *endp;
+	(let endp const (ptr u64))
 
     // Is this message fragment too short?  If it is, stuff it away.
     if (newLength < SC_BUFSIZE)	{
@@ -476,6 +482,12 @@ void spooky_update (
         state->m_remainder = (uint8_t)newLength;
         return;
     }
+	(cond ((> newLength SC_BUFSIZE)
+	       (call memcpy (get-addr (deref (cast (ptr u8)(-> state m_data)) (-> state m_remainder))) message length)
+		(set (-> state m_length) (+ length (-> state m_length)))
+		(set (-> state m_remainder) (cast u8 newLength))
+		(return)
+	)
 
     // init the variables
     if (state->m_length < SC_BUFSIZE) {
@@ -496,8 +508,29 @@ void spooky_update (
         h10 = state->m_state[10];
         h11 = state->m_state[11];
     }
+	(cond ((< (-> state m_length) SC_BUFSIZE)
+	       (set h0 (set h3 (set h6 (set h9 (deref (-> state m_state) 0)))))
+		(set h1 (set h4 (set h7 (set h10 (deref (-> state m_state) 1)))))
+		(set h2 (set h5 (set h8 (set h11 SC_CONST))))
+	     )
+		(else (set h0 (deref (-> state m_state) 0))
+		
+		(set h1 (deref (-> state m_state) 1))
+		(set h2 (deref (-> state m_state) 2))
+		(set h3 (deref (-> state m_state) 3))
+		(set h4 (deref (-> state m_state) 4))
+		(set h5 (deref (-> state m_state) 5))
+		(set h6 (deref (-> state m_state) 6))
+		(set h7 (deref (-> state m_state) 7))
+		(set h8 (deref (-> state m_state) 8))
+		(set h9 (deref (-> state m_state) 9))
+		(set h10 (deref (-> state m_state) 10))
+		(set h11 (deref (-> state m_state) 11))
+		)
+	)
     state->m_length = length + state->m_length;
-
+	(set (-> state m_length) (+ length (-> state m_length)))
+	
     // if we've got anything stuffed away, use it now
     if (state->m_remainder) {
         uint8_t prefix = SC_BUFSIZE-state->m_remainder;
@@ -512,171 +545,164 @@ void spooky_update (
     } else {
         u.p8 = (const uint8_t *)message;
     }
-
+	(cond ((-> state m_remainder)
+	       (let prefix u8 (- SC_BUFSIZE (-> state m_remainder)))
+		(call memcpy (get-addr (deref (cast (ptr u8)(-> state m_data)) (-> state m_remainder))) message prefix)
+		(set (. u p64) (-> state m_data))
+		(call mix (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+		(call mix (get-addr (. u p64) SC_NUMVARS) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+		(set (. u p8) (+ (cast (ptr u8) message) prefix))
+		(set length (- length prefix))
+		)
+		(else (set (. u p8) (cast (ptr u8) message)))
+	)
+	
     // handle all whole blocks of SC_BLOCKSIZE bytes
-    endp = u.p64 + (length/SC_BLOCKSIZE)*SC_NUMVARS;
-    remainder = (uint8_t)(length-((const uint8_t *)endp - u.p8));
-    if (ALLOW_UNALIGNED_READS || (u.i & 0x7) == 0) {
-        while (u.p64 < endp) {
-            mix(u.p64, &h0, &h1, 
-                &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
-		u.p64 += SC_NUMVARS;
-        }
-    } else {
-        while (u.p64 < endp) {
-            memcpy(state->m_data, u.p8, SC_BLOCKSIZE);
-            mix(state->m_data, &h0, &h1,
-                &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
-            u.p64 += SC_NUMVARS;
-        }
-    }
-
+	(set endp (+ (. u p64) (* (/ length SC_BLOCKSIZE) SC_NUMVARS)))
+	
+	(set remainder (cast u8 (- length (- (cast const (ptr u8) endp) (. u p8)))))
+	
+	(cond ((or ALLOW_UNALIGNED_READS (== (& (. u i) 0x7) 0))
+	       (while (< (. u p64) endp)
+			(call mix (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+			(set (. u p64) (+ (. u p64) SC_NUMVARS))
+			))
+		   (else (while (< (. u p64) endp)
+		                (call memcpy (-> state m_data) (. u p8) SC_BLOCKSIZE)
+						(call mix (-> state m_data) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11)
+						(set (. u p64) (+ (. u p64) SC_NUMVARS))
+					)
+			)
+	)
+	       
     // stuff away the last few bytes
-    state->m_remainder = remainder;
-    memcpy(state->m_data, endp, remainder);
-
+	(set (-> state m_remainder) remainder)
+	(call memcpy (-> state m_data) endp remainder)
+	
     // stuff away the variables
-    state->m_state[0] = h0;
-    state->m_state[1] = h1;
-    state->m_state[2] = h2;
-    state->m_state[3] = h3;
-    state->m_state[4] = h4;
-    state->m_state[5] = h5;
-    state->m_state[6] = h6;
-    state->m_state[7] = h7;
-    state->m_state[8] = h8;
-    state->m_state[9] = h9;
-    state->m_state[10] = h10;
-    state->m_state[11] = h11;
-}
-
-// report the hash for the concatenation of all message fragments so far
-void spooky_final
-(
-	struct spooky_state *state,
-	uint64_t *hash1,
-	uint64_t *hash2
+	(set (deref (-> state m_state) 0) h0)
+	(set (deref (-> state m_state) 1) h1)
+	(set (deref (-> state m_state) 2) h2)
+	(set (deref (-> state m_state) 3) h3)
+	(set (deref (-> state m_state) 4) h4)
+	(set (deref (-> state m_state) 5) h5)
+	(set (deref (-> state m_state) 6) h6)
+	(set (deref (-> state m_state) 7) h7)
+	(set (deref (-> state m_state) 8) h8)
+	(set (deref (-> state m_state) 9) h9)
+	(set (deref (-> state m_state) 10) h10)
+	(set (deref (-> state m_state) 11) h11)
 )
-{
-	uint64_t h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11;
-	const uint64_t *data = (const uint64_t *)state->m_data;
-	uint8_t remainder = state->m_remainder;
-
+// report the hash for the concatenation of all message fragments so far
+(define spooky_final ((state (ptr spooky_state)) (hash1 (ptr u64)) (hash2 (ptr u64))))
+	(let h0 u64 ) (let h1 u64) (let h2 u64) (let h3 u64) (let h4 u64) (let h5 u64) (let h6 u64) (let h7 u64) (let h8 u64) (let h9 u64) (let h10 u64) (let h11 u64)
+	
+	(let data (ptr u64) (cast const u64 (-> state m_data)))
+	
+	(let remainder u8 (-> state m_remainder))
+	
 	// init the variables
-	if (state->m_length < SC_BUFSIZE)
-	{
-		spooky_shorthash(state->m_data, state->m_length, hash1, hash2);
-		return;
-	}
-
-	h0 = state->m_state[0];
-	h1 = state->m_state[1];
-	h2 = state->m_state[2];
-	h3 = state->m_state[3];
-	h4 = state->m_state[4];
-	h5 = state->m_state[5];
-	h6 = state->m_state[6];
-	h7 = state->m_state[7];
-	h8 = state->m_state[8];
-	h9 = state->m_state[9];
-	h10 = state->m_state[10];
-	h11 = state->m_state[11];
-
-	if (remainder >= SC_BLOCKSIZE)
-	{
-		// m_data can contain two blocks; handle any whole first block
-		mix(data,&h0,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11);
-		data += SC_NUMVARS;
-		remainder -= SC_BLOCKSIZE;
-	}
-
+	(cond ((< (-> state m_length) SC_BUFSIZE)
+			(call spooky_shorthash (-> state m_data) (-> state m_length) hash1 hash2)
+			(return)
+	)
+	
+	(set h0 (deref (-> state m_state) 0))
+	(set h1 (deref (-> state m_state) 1))
+	(set h2 (deref (-> state m_state) 2))
+	(set h3 (deref (-> state m_state) 3))
+	(set h4 (deref (-> state m_state) 4))
+	(set h5 (deref (-> state m_state) 5))
+	(set h6 (deref (-> state m_state) 6))
+	(set h7 (deref (-> state m_state) 7))
+	(set h8 (deref (-> state m_state) 8))
+	(set h9 (deref (-> state m_state) 9))
+	(set h10 (deref (-> state m_state) 10))
+	(set h11 (deref (-> state m_state) 11))
+	
+	
+	(cond ((>= remainder SC_BLOCKSIZE)
+		(call mix data (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+			(set data (+ data SC_NUMVARS))
+			(set remainder (- remainder SC_BLOCKSIZE))
+	)
+	
 	// mix in the last partial block, and the length mod SC_BLOCKSIZE
-	memset(&((uint8_t *)data)[remainder], 0, (SC_BLOCKSIZE-remainder));
-
-	((uint8_t *)data)[SC_BLOCKSIZE-1] = remainder;
+	(call memset (get-addr (deref (cast (ptr u8) data) remainder)) 0 (- SC_BLOCKSIZE remainder))
+	
+	(set (deref (cast (ptr u8) data) SC_BLOCKSIZE-1) remainder)
 
 	// do some final mixing
-	end(data,&h0,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11);
-
-	*hash1 = h0;
-	*hash2 = h1;
+	(call end data (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+	
+	(set (deref hash1) h0)
+	(set (deref hash2) h1)
+	)
 }
 
 // do the whole hash in one call
-void spooky_hash128(
-    const void *message,
-    size_t length,
-    uint64_t *hash1,
-    uint64_t *hash2
-) {
-    uint64_t h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11;
-    uint64_t buf[SC_NUMVARS];
-    uint64_t *endp;
-    union {
-        const uint8_t *p8;
-        uint64_t *p64;
-        uintptr_t i;
-    } u;
-    size_t remainder;
+(define spooky_hash128 ((message const (ptr ())) (length u64) (hash1 (ptr u64)) (hash2 (ptr u64))) () export
+	(let h0 u64 ) (let h1 u64) (let h2 u64) (let h3 u64) (let h4 u64) (let h5 u64) (let h6 u64) (let h7 u64) (let h8 u64) (let h9 u64) (let h10 u64) (let h11 u64)
+	
+	(let buf (array u64 SC_NUMVARS))
+	(let endp (ptr u64))
+	(let u (union (p8 const (ptr u8)) (p64 (ptr u64)) (i u64)))
+	
+	(let remainder u64)
+	
+	(cond ((< length SC_BUFSIZE)
+			(call spooky_shorthash message length hash1 hash2)
+			(return)
+		)
+	)
+	
+	(set h0 (set h3 (set h6 (set h9 (deref hash1)))))
+	(set h1 (set h4 (set h7 (set h10 (deref hash2)))))
+	(set h2 (set h5 (set h8 (set h11 SC_CONST))))
 
-    if (length < SC_BUFSIZE) {
-        spooky_shorthash(message, length, hash1, hash2);
-        return;
-    }
-
-    h0 = h3 = h6 = h9  = *hash1;
-    h1 = h4 = h7 = h10 = *hash2;
-    h2 = h5 = h8 = h11 = SC_CONST;
-
-    u.p8 = (const uint8_t *)message;
-    endp = u.p64 + (length/SC_BLOCKSIZE) * SC_NUMVARS;
+	(set (. u p8) (cast (ptr u8) message))
+	(set endp (+ (. u p64) (* (/ length SC_BLOCKSIZE) SC_NUMVARS)))
 
     // handle all whole blocks of SC_BLOCKSIZE bytes
-    if (ALLOW_UNALIGNED_READS || (u.i & 0x7) == 0) {
-        while (u.p64 < endp) {
-            mix(u.p64,&h0,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11);
-            u.p64 += SC_NUMVARS;
-        }
-    } else {
-        while (u.p64 < endp) {
-            memcpy(buf, u.p64, SC_BLOCKSIZE);
-            mix(buf,&h0,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11);
-            u.p64 += SC_NUMVARS;
-        }
-    }
-
+	(cond ((|| ALLOW_UNALIGNED_READS (== (& (. u i) 7) 0)))
+		(while (< (. u p64) endp)
+			(call memcpy (. u p64) (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+			(set (. u p64) (+ (. u p64) SC_NUMVARS))
+			)
+			)
+			(else 
+			     (while (< (. u p64) endp)
+				        (call memcpy buf (. u p64) SC_BLOCKSIZE)
+						(call mix buf (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+						(set (. u p64) (+ (. u p64) SC_NUMVARS))
+					)
+				)
+		)
+		
     // handle the last partial block of SC_BLOCKSIZE bytes
-    remainder = (length - ((const uint8_t *)endp - (const uint8_t *)message));
-    memcpy(buf, endp, remainder);
-    memset(((uint8_t *)buf) + remainder, 0, SC_BLOCKSIZE - remainder);
-    ((uint8_t *)buf)[SC_BLOCKSIZE-1] = remainder;
-
+	(set remainder (- length (- (cast const (ptr u8)) endp) (cast const (ptr u8)) message))
+	
+	(call memcpy buf endp remainder)
+	(call memset (+ (cast (ptr u8)) buf remainder) 0 (- SC_BLOCKSIZE remainder))
+	
+	(set (deref (cast (ptr u8) buf) (SC_BLOCKSIZE-1)) remainder)
     // do some final mixing
-    end(buf, &h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
-    *hash1 = h0;
-    *hash2 = h1;
-}
-
-uint64_t spooky_hash64
-(
-	const void *message,
-	size_t length,
-	uint64_t seed
+	(call end buf (get-addr h0) (get-addr h1) (get-addr h2) (get-addr h3) (get-addr h4) (get-addr h5) (get-addr h6) (get-addr h7) (get-addr h8) (get-addr h9) (get-addr h10) (get-addr h11))
+	
+	(set (deref hash1) h0)
+	(set (deref hash2) h1)
 )
-{
-	uint64_t hash1 = seed;
-	spooky_hash128(message, length, &hash1, &seed);
-	return hash1;
-}
 
-uint32_t spooky_hash32
-(
-	const void *message,
-	size_t length,
-	uint32_t seed
+(define spooky_hash64 ((message const (ptr ()) (length u64) (seed u64)) u64 export
+	(let hash1 u64 seed)
+	(call spooky_hash128 message length (get-addr hash1) (get-addr seed))
+	(return hash1)
 )
-{
-	uint64_t hash1 = seed, hash2 = seed;
-	spooky_hash128(message, length, &hash1, &hash2);
-	return (uint32_t)hash1;
-}
+
+(define spooky_hash32 ((message const (ptr ()) (length u64) (seed u32)) u32 export
+
+	(let hash1 u64 seed)(let hash2 u64 seed)
+	
+	(call spooky_hash128 message length (get-addr hash1) (get-addr hash2))
+	(return ((cast u32) hash1))
+	)

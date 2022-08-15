@@ -935,11 +935,13 @@ struct nfa
                 if (negate) {
                     ++range_negative_count;
                     report1("subtract codepoint from charset %d\n", (int)b[0]);
+                    if (first_codepoint == '\n') lacks.insert(GraphemeString("\r\n"));
                     lacks.insert(GraphemeString(b));
                 }
                 else {
                     ++range_positive_count;
                     report1("add codepoint to charset %d\n", (int)b[0]);
+                    if (first_codepoint == '\n') matches.insert(GraphemeString("\r\n"));
                     matches.insert(GraphemeString(b));
                 }
                 return true;
@@ -2194,11 +2196,13 @@ simple_type
             .prod(LLex::IDENT,"IDENT", "[\\p{:word:}_][_\\p{:alnum:}]*+")
 
             //.prod("LITERAL", "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|volatile|do|if|static|while|_Bool|_Imaginary|restrict|_Complex|inline|_Alignas|_Generic|_Thread_local|_Alignof|_Noreturn|_Atomic|_Static_assert")
+
             .prod(LLex::dontcare,"dontcare", "_")
             .prod(LLex::plus, "+","\\+")
             .prod(LLex::minus, "-", "-")
             .prod(LLex::mul, "*", "\\*")
             .prod(LLex::div, "/", "/")
+
             .prod(LLex::rem, "%", "%")
             .prod(LLex::assign, "=", "=")
             .prod(LLex::eq, "==", "==")
@@ -2217,6 +2221,7 @@ simple_type
             .prod(LLex::bor, "|", "\\|")
             .prod(LLex::bxor, "^", "^")
             .prod(LLex::bnot, "~", "~")
+
             .prod(LLex::visible, "visible","visible")
             .prod(LLex::atomic, "atomic", "atomic")
             .prod(LLex::ordered, "ordered", "ordered")
@@ -2251,6 +2256,7 @@ simple_type
             .prod(LLex::let_loop, "let-loop", "let-loop")
 			.prod(LLex::for_, "for", "for")
             .prod(LLex::while_, "while", "while")
+			
             .prod(LLex::until_, "until", "until")
             .prod(LLex::continue_, "continue","continue")
             .prod(LLex::cond, "cond", "cond")
@@ -2261,7 +2267,7 @@ simple_type
             .prod(LLex::continuable, "continuable", "continuable")
             .prod(LLex::search, "search","search")
             .prod(LLex::fail, "fail","fail")
-            .prod(LLex::bool_, "?", "?")
+            .prod(LLex::bool_, "?", "\\?")
             .prod(LLex::yes, "yes","yes")
             .prod(LLex::no, "no","no")
             .prod(LLex::cut, "cut","cut")
@@ -2304,7 +2310,7 @@ simple_type
 			.prod(LLex::as_it_points_to,"->","->")
             .prod(LLex::dot_pair, "\\", "\\\\")
             .skip("/\\*[^*]*+(\\*[^/][^*]*+)*\\*/")
-        .skip("//[^\\n\\r]*+[\\r\\n]")
+        .skip("//[^\\n\\r]*+[\\n\\r]")
         .skip("[\\p{:space:}]++")
         ;
 #else

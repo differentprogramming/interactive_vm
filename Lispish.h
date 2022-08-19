@@ -118,11 +118,12 @@ class SexpAtom : public Sexp
 public:
 	SexpType type() { return SexpType::atom_; }
 	Atom value;
+	bool ident;
 	virtual uint64_t hash() const
 	{
 		return spooky_hash64((void*)&value, 4, 0x09a38b2ba5edaf0e);
 	}
-	SexpAtom(Atom  g) :value(g) {}
+	SexpAtom(Atom  g, bool id) :value(g), ident(id) {}
 	bool operator == (RootPtr<Sexp> o) {
 		if (o->type() == type()) {
 			return static_pointer_cast<SexpAtom>(o)->value == value;

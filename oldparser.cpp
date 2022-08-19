@@ -1914,7 +1914,7 @@ ReadState ReadItem(RootPtr<Sexp>& item, GraphemeString &b, int &pos, int &startp
         case (Atom)LLex::IDENT:
             gen_atom = intern(b.slice(startpos, pos));
             ++pos;
-            item = new SexpAtom(gen_atom);
+            item = new SexpAtom(gen_atom,true);
             break;
         case (Atom)LLex::string:
             item = new SexpString(b.slice(startpos, pos).deep_copy());
@@ -1950,7 +1950,7 @@ ReadState ReadItem(RootPtr<Sexp>& item, GraphemeString &b, int &pos, int &startp
             return ReadState::Dot;
         default:
             ++pos;
-            item = new SexpAtom(found);
+            item = new SexpAtom(found,false);
         }
         return ReadState::ReadItem;
     }
@@ -1964,6 +1964,7 @@ std::string LispPrint(RootPtr<Sexp> l)
 {
     bool in_list = false;
     std::ostringstream t;
+ //   bool is_ident;
     do {
         switch (l->type())
         {
@@ -1994,7 +1995,11 @@ std::string LispPrint(RootPtr<Sexp> l)
             if (in_list) t << " \\ ";
             report1("uninterning atom %d\n", static_pointer_cast<SexpAtom>(l)->value);
             report1("as %s\n", atom_to_name[static_pointer_cast<SexpAtom>(l)->value]->str());
-            t << *atom_to_name[static_pointer_cast<SexpAtom>(l)->value] << ' ';
+//            is_ident = static_pointer_cast<SexpAtom>(l)->ident;
+//            if (is_ident) t << '|';
+            t << *atom_to_name[static_pointer_cast<SexpAtom>(l)->value];
+//            if (is_ident) t << '|';
+            t << ' ';
             l = SNil;
             break;
 
@@ -2102,6 +2107,23 @@ LispReadState LispRead(GraphemeString b, int& pos, RootPtr<Sexp>& ret, bool read
     }
 }
 
+
+int32_t SSA_Counter = 0;
+
+class  Environment : public Collectable
+{
+public:
+    InstancePtr< Environment> parent_env;
+    //functions go in here as type (lambda (list of parameter types) (return type) inline|() export|()) and value (source)
+    InstancePtr<CollectableValueHashTable<Atom, SexpCons>> named_types;
+    InstancePtr<CollectableValueHashTable<Atom, SexpCons>> const_type_and_value_table;
+    InstancePtr<CollectableValueHashTable<Atom, SexpCons>> var_type_table;
+
+    //by SSA counter atom, type, register, 
+    InstancePtr<CollectableValueHashTable<int32_t, SexpCons>> ssa_table;
+
+};
+
 std::string scan(LPSTR source)
 {
     std::ostringstream t;
@@ -2199,11 +2221,15 @@ simple_type
 
             .prod(LLex::dontcare,"dontcare", "_")
             .prod(LLex::plus, "+","\\+")
+            .prod(LLex::plus_asn, "+=", "\\+=")
             .prod(LLex::minus, "-", "-")
+            .prod(LLex::minus_asn, "-=", "-=")
             .prod(LLex::mul, "*", "\\*")
+            .prod(LLex::mul_asn, "*=", "\\*=")
             .prod(LLex::div, "/", "/")
-
+            .prod(LLex::div_asn, "/=", "/=")
             .prod(LLex::rem, "%", "%")
+            .prod(LLex::rem_asn, "%=", "%=")
             .prod(LLex::assign, "=", "=")
             .prod(LLex::eq, "==", "==")
             .prod(LLex::le, "<=", "<=")
@@ -2211,17 +2237,21 @@ simple_type
             .prod(LLex::gt, ">", ">")
             .prod(LLex::lt, "<", "<")
             .prod(LLex::shiftl, "<<", "<<")
+            .prod(LLex::shiftl_asn, "<<=", "<<=")
             .prod(LLex::shiftr, ">>", ">>")
+            .prod(LLex::shiftr_asn, ">>=", ">>=")
             .prod(LLex::ne, "!=","!=")
             .prod(LLex::and, "and", "and")
             .prod(LLex::or, "or", "or")
             .prod(LLex::xor, "xor", "xor")
             .prod(LLex::not, "not", "not")
             .prod(LLex::band, "&", "&")
+            .prod(LLex::band_asn, "&=", "&=")
             .prod(LLex::bor, "|", "\\|")
+            .prod(LLex::bor_asn, "|=", "\\|=")
             .prod(LLex::bxor, "^", "^")
+            .prod(LLex::bxor_asn, "^=", "^=")
             .prod(LLex::bnot, "~", "~")
-
             .prod(LLex::visible, "visible","visible")
             .prod(LLex::atomic, "atomic", "atomic")
             .prod(LLex::ordered, "ordered", "ordered")
@@ -2249,6 +2279,8 @@ simple_type
             .prod(LLex::double_, "double", "double")
             .prod(LLex::any, "any","any")
             .prod(LLex::const_, "const", "const")
+            .prod(LLex::var, "var", "var")
+            .prod(LLex::phi,"phi","phi")
             .prod(LLex::let, "let", "let")
             .prod(LLex::set, "set", "set")
             .prod(LLex::define, "define", "define")
@@ -2281,7 +2313,66 @@ simple_type
             .prod(LLex::switch_, "switch","switch")
 			.prod(LLex::fallthrough,"fallthrough","fallthrough")
             .prod(LLex::inline_, "inline","inline")
-            .prod(LLex::float_intrinsic, "float-intrisic", "sin|cos|asin|acos|exp|ln|10x|log10|log2|2^x|sqrt|tan|atan|10^x")
+            .prod(LLex::sin, "sin", "sin")
+            .prod(LLex::cos, "cos", "cos")
+            .prod(LLex::asin, "asin", "asin")
+            .prod(LLex::acos, "acos", "acos")
+            .prod(LLex::exp, "exp", "exp")
+            .prod(LLex::ln, "ln", "ln")
+            .prod(LLex::exp10, "exp10", "exp10")
+            .prod(LLex::log, "log", "log")
+            .prod(LLex::exp2, "exp2", "exp2")
+            .prod(LLex::log2, "log2", "log2")
+            .prod(LLex::sqrt, "sqrt", "sqrt")
+            .prod(LLex::tan, "tan", "tan")
+            .prod(LLex::atan, "atan", "atan")
+            .prod(LLex::atan2, "atan2", "atan2")
+            .prod(LLex::pow, "pow", "pow")
+            .prod(LLex::nan, "nan", "nan")
+            .prod(LLex::abs, "abs", "abs")
+            .prod(LLex::fabs, "fabs", "fabs")
+            .prod(LLex::sinh, "sinh", "sinh")
+            .prod(LLex::cosh, "cosh", "cosh")
+            .prod(LLex::asinh, "asinh", "asinh")
+            .prod(LLex::acosh, "acosh", "acosh")
+            .prod(LLex::tanh, "tanh", "tanh")
+            .prod(LLex::atanh, "atanh", "atanh")
+            .prod(LLex::frexp, "frexp", "frexp")
+            .prod(LLex::ldexp, "ldexp", "ldexp")
+            .prod(LLex::expm1, "expm1", "expm1")
+            .prod(LLex::modf, "modf", "modf")
+            .prod(LLex::cbrt, "cbrt", "cbrt")
+            .prod(LLex::hypot, "hypot", "hypot")
+            .prod(LLex::erf, "erf", "erf")
+            .prod(LLex::erc, "erc", "erc")
+            .prod(LLex::tgamma, "tgamma", "tgamma")
+            .prod(LLex::lgamma, "lgamma", "lgamma")
+            .prod(LLex::ceil, "ceil", "ceil")
+            .prod(LLex::floor, "floor", "floor")
+            .prod(LLex::fmod, "fmod", "fmod")
+            .prod(LLex::trunc, "trunc", "trunc")
+            .prod(LLex::round, "round", "round")
+            .prod(LLex::lround, "lround", "lround")
+            .prod(LLex::rint, "rint", "rint")
+            .prod(LLex::lrint, "lrint", "lrint")
+ //           .prod(LLex::remainder, "remainder", "remainder")
+            .prod(LLex::remquo, "remquo", "remquo")
+            .prod(LLex::nextafter, "nextafter", "nextafter")
+            .prod(LLex::fdim, "fdim", "fdim")
+            .prod(LLex::fmax, "fmax", "fmax")
+            .prod(LLex::fmin, "fmin", "fmin")
+            .prod(LLex::fma, "fma", "fma")
+            .prod(LLex::fpclassify, "fpclassify", "fpclassify")
+            .prod(LLex::isfinite, "isfinite", "isfinite")
+            .prod(LLex::isinf, "isinf", "isinf")
+            .prod(LLex::isnan, "isnan", "isnan")
+            .prod(LLex::isnormal, "isnormal", "isnormal")
+            .prod(LLex::signbit, "signbit", "signbit")
+            .prod(LLex::isunordered, "isunordered", "isunordered")
+            .prod(LLex::infinity, "infinity", "infinity")
+            .prod(LLex::huge_val, "huge-val", "huge-val")
+            .prod(LLex::huge_valf, "huge-valf", "huge-valf")
+
             .prod(LLex::tuple, "tuple", "tuple")
             .prod(LLex::struct_, "struct", "struct")
             .prod(LLex::alg, "alg","alg")
@@ -2289,6 +2380,12 @@ simple_type
             .prod(LLex::array, "array", "array")
             .prod(LLex::cast, "cast","cast")
             .prod(LLex::ptr, "ptr","ptr")
+            .prod(LLex::get_addr, "get-addr", "get-addr")
+            .prod(LLex::gen_reg, "gen-reg", "gen-reg")
+            .prod(LLex::float_reg, "float-reg","float-reg")
+            .prod(LLex::in_mem, "in-mem", "in-mem")
+            .prod(LLex::prune, "prune", "prune")
+
 			.prod(LLex::deref, "deref","deref")
 			.prod(LLex::take_addr, "take-addr","take-addr")
 			.prod(LLex::type,"type","type")
@@ -2296,8 +2393,8 @@ simple_type
             .prod(LLex::vector, "vector","vector")
             .prod(LLex::return_, "return", "return")
             .prod(LLex::co_return_, "co-return","co-return")
-            .prod(LLex::co_return_, "module", "module")
-            .prod(LLex::co_return_, "export", "export")
+            .prod(LLex::module_, "module", "module")
+            .prod(LLex::export_, "export", "export")
             .prod(LLex::return_from, "return-from", "return-from")
             .prod(LLex::call, "call","call")
             .prod(LLex::string, "STRING", "\"(\\\\([^xu]|x[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])|[^\"\\\\])*\"s?")
